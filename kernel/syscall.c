@@ -7,6 +7,9 @@
 #include "syscall.h"
 #include "sysfunc.h"
 
+// p1b
+int num_syscalls = 0;
+
 // User code makes a system call with INT T_SYSCALL.
 // System call number in %eax.
 // Arguments on the stack, from the user call to the C
@@ -103,6 +106,7 @@ static int (*syscalls[])(void) = {
 [SYS_wait]    sys_wait,
 [SYS_write]   sys_write,
 [SYS_uptime]  sys_uptime,
+[SYS_getnumsyscallp] sys_getnumsyscallp,
 };
 
 // Called on a syscall trap. Checks that the syscall number (passed via eax)
@@ -111,6 +115,7 @@ void
 syscall(void)
 {
   int num;
+  num_syscalls++;
   
   num = proc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num] != NULL) {

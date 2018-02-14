@@ -6,6 +6,8 @@
 #include "proc.h"
 #include "sysfunc.h"
 
+extern int num_syscalls;
+
 int
 sys_fork(void)
 {
@@ -87,4 +89,10 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+// p1b
+int 
+sys_getnumsyscallp(void) {
+  return num_syscalls;
 }
