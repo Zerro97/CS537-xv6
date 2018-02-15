@@ -1,5 +1,7 @@
 #ifndef _PROC_H_
 #define _PROC_H_
+#include "pstat.h"
+
 // Segments in proc->gdt.
 // Also known to bootasm.S and trapasm.S
 #define SEG_KCODE 1  // kernel code
@@ -57,7 +59,7 @@ struct context {
   uint eip;
 };
 
-enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+// enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
 struct proc {
@@ -74,6 +76,10 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  uchar priority;              // priority p2b
+  uint ticks_used;             // number of ticks used under the current priority
+  uint last_sched_time;        // by ticks
 };
 
 // Process memory is laid out contiguously, low addresses first:

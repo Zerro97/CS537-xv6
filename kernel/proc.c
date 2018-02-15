@@ -1,4 +1,5 @@
 #include "types.h"
+#include "pstat.h"
 #include "defs.h"
 #include "param.h"
 #include "mmu.h"
@@ -11,9 +12,15 @@ struct {
   struct proc proc[NPROC];
 } ptable;
 
+int tick_quota[] = {5, 5, 10, 20};    // priority: 0,1,2,3
+
 static struct proc *initproc;
 
 int nextpid = 1;
+
+extern struct spinlock tickslock;
+extern uint ticks;
+
 extern void forkret(void);
 extern void trapret(void);
 
@@ -45,6 +52,8 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->priority = 0;
+  p->ticks_used = 0;
   release(&ptable.lock);
 
   // Allocate kernel stack if possible.
@@ -256,29 +265,40 @@ void
 scheduler(void)
 {
   struct proc *p;
+  uchar priority = 0;
 
   for(;;){
     // Enable interrupts on this processor.
     sti();
+    
+    // boost the priority after long time starvation
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->state == RUNNABLE && p->priority == NPRIOR - 1 &&
+          p->last_sched_time + TSTARV <= ticks) {
+        p->priority--;
+      }
+    }
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
+    for (priority = 0; priority < NPRIOR; priority++) {
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+        if(p->state != RUNNABLE || p->priority != priority)
+          continue;
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-      swtch(&cpu->scheduler, proc->context);
-      switchkvm();
+        // Switch to chosen process.  It is the process's job
+        // to release ptable.lock and then reacquire it
+        // before jumping back to us.
+        proc = p;
+        switchuvm(p);
+        p->state = RUNNING;
+        swtch(&cpu->scheduler, proc->context);
+        switchkvm();
 
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      proc = 0;
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.
+        proc = 0;
+      }
     }
     release(&ptable.lock);
 
@@ -305,12 +325,25 @@ sched(void)
   cpu->intena = intena;
 }
 
+// p2b update ticks and priority. The function itself
+// does not enforce lock, so it should be inserted in
+// a locked region.
+void
+update_ticks(void) {
+  proc->ticks_used++;
+  if (proc->priority < 3 &&
+      proc->ticks_used >= tick_quota[proc->priority]) {
+    proc->priority++;
+  }
+}
+
 // Give up the CPU for one scheduling round.
 void
 yield(void)
 {
   acquire(&ptable.lock);  //DOC: yieldlock
   proc->state = RUNNABLE;
+  update_ticks();
   sched();
   release(&ptable.lock);
 }
@@ -443,4 +476,24 @@ procdump(void)
   }
 }
 
-
+// P2b
+void
+getpinfo(struct pstat* ps) {
+  int i = 0;
+  int pi = 0;
+  struct proc* pptr;
+  for (i = 0; i < NPROC; i++) {
+    pptr = ptable.proc + i;
+    ps->inuse[i] = (pptr->state != UNUSED);
+    ps->pid[i] = pptr->pid;
+    ps->priority[i] = pptr->priority;
+    ps->state[i] = pptr->state;
+    for (pi = 0; pi < pptr->priority; pi++) {
+      ps->ticks[i][pi] = tick_quota[pi];
+    }
+    ps->ticks[i][pptr->priority] = pptr->ticks_used;
+    for (pi = pptr->priority + 1; pi < NPRIOR; pi++) {
+      ps->ticks[i][pi] = 0;
+    }
+  }
+}

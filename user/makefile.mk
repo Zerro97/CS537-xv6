@@ -4,6 +4,7 @@ USER_PROGS := \
 	cat\
 	echo\
 	forktest\
+	getpinfo\
 	grep\
 	init\
 	kill\
@@ -13,11 +14,11 @@ USER_PROGS := \
 	rm\
 	sh\
 	stressfs\
+	syscallptest\
 	tester\
 	usertests\
 	wc\
 	zombie\
-	syscallptest\
 
 USER_PROGS := $(addprefix user/, $(USER_PROGS))
 

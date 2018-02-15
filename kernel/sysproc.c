@@ -1,5 +1,6 @@
 #include "types.h"
 #include "x86.h"
+#include "pstat.h"
 #include "defs.h"
 #include "param.h"
 #include "mmu.h"
@@ -96,3 +97,14 @@ int
 sys_getnumsyscallp(void) {
   return num_syscalls;
 }
+
+// p2b
+int sys_getpinfo(void) {
+  struct pstat* ps;
+  if (argptr(0, (char**)&ps, sizeof(struct pstat)) < 0) {
+    return -1;
+  }
+  getpinfo(ps);
+  return 0;
+}
+

@@ -37,6 +37,6 @@ In ``void trap(struct trapframe *tf)``[kernel/trap.c](../kernel/trap.c),
     if(proc && proc->state == RUNNING && tf->trapno == T_IRQ0+IRQ_TIMER)
       yield();
 
-The call chain is ``yield()`` -> ``sched()`` -> ``swtch(&proc->context, cpu->scheduler);``. At this point the cpu goes back to the scheduler and the next step is switchkvm(), witch sets the page table base register to kpgdir.
+The call chain is ``yield()``[kernel/proc.c](../kernel/proc.c) -> ``sched()``[kernel/proc.c](../kernel/proc.c) -> ``swtch(&proc->context, cpu->scheduler);``. At this point the cpu goes back to the scheduler and the next step is switchkvm(), witch sets the page table base register to kpgdir.
 
 The struct proc, struct cpu and struct context are defined in [kernel/proc.h](../kernel/proc.h).
