@@ -41,6 +41,73 @@ The call chain is ``yield()``[kernel/proc.c](../kernel/proc.c) -> ``sched()``[ke
 
 The struct proc, struct cpu and struct context are defined in [kernel/proc.h](../kernel/proc.h).
 
+
+## Process State
+There are six states one process can be in.  ``enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };``. UNUSED is the initial state. ``static struct proc* allocproc(void)`` changes one UNUSED process to EMBRYO. ``int fork(void)`` calls allocproc and changes the new EMBRYO process to RUNNABLE. ``"void sleep(void *chan, struct spinlock *lk)"`` changes the state to SLEEPING and calls sched() which directs to the trap/scheduler. The trap/scheduler switches the process state between RUNNABLE and RUNNING.
+
+One thing worth noting is there are two types of sleep. One is sleep on time
+
+    int
+    sys_sleep(void)
+    {
+      ...
+      acquire(&tickslock);
+        ...
+        sleep(&ticks, &tickslock);
+        ...
+      release(&tickslock);
+      ...
+    }
+
+the first argument of the sleep is a ``void*`` which points to the condition value. Here it is ``ticks``. The ``ticks`` is waken up in the trap when a timer interrupt happens.
+
+    void
+    trap(struct trapframe *tf)
+    {
+      ...
+      switch(tf->trapno){
+      case T_IRQ0 + IRQ_TIMER:
+        if(cpu->id == 0){
+          acquire(&tickslock);
+          ticks++;
+          wakeup(&ticks);
+          release(&tickslock);
+        }
+        ...
+        break;
+
+The other type of sleep is ``wait()``.     
+
+    int
+    wait(void) {
+      ...
+      sleep(proc, &ptable.lock);  //DOC: wait-sleep
+    }
+
+The condition value is proc, i.e. the current running proc. In [kernel/proc.h](../kernel/proc.h).
+
+    extern struct proc *proc asm("%gs:4");     // cpus[cpunum()].proc
+
+It is waken up in 
+
+    void
+    exit(void)
+    {
+      ...
+      wakeup1(proc->parent);
+      ...
+    }
+
+The wakeup1 function searchs the process table, finds processes with CV ``proc->parent`` and changes their states to RUNNABLE.
+
+The ``exit`` function change the state to ZOMBIE. The ``wait`` function change the ZOMBIE processes to UNUSED.
+
+
+
+All the functions mentioned are defined in [kernel/proc.c](../kernel/proc.c). 
+
+
+
 ## benchmark
 | Avg Complete time | Round & Robin | Multi-level Feedback Queue |
 | ----------------- | ------------- | -------------------------- |
@@ -52,5 +119,5 @@ The struct proc, struct cpu and struct context are defined in [kernel/proc.h](..
 
 * workload 1: 5 dry run loops (100000000 times).
 * workload 2: 61 dry run loops (100000000 times).
-* workload 3: 10 dry run loops (100000000 times) arrive at first and 10 dry run loops (1000000) arrive seconds later.
+* workload 3: 10 dry run loops (100000000 times) arrive at first and 10 dry run loops (1000000) arrive 1.6 seconds later.
 * workload 4: 3 dry run loops, 3 read processes and 3 sleeping processes.

@@ -511,7 +511,6 @@ getpinfo(struct pstat* ps) {
     pptr = &ptable.proc[i];
     ps->inuse[i] = (pptr->state != UNUSED);
     ps->pid[i] = pptr->pid;
-    // cprintf("copy priority: pid=%d, priority=%d\n", pptr->pid, pptr->priority);
     ps->priority[i] = pptr->priority;
     ps->state[i] = pptr->state;
     for (pi = 0; pi < pptr->priority; pi++) {
