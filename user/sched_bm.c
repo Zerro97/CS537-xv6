@@ -63,14 +63,65 @@ empty_loop(int n) {
   }
 }
 
+void
+periodic_sleep(int period, int n) {
+  while (0 < n--) {
+    sleep(period);
+  }
+}
+
+void
+read_then_write(char* path) {   // in fact only read
+  char buf[512];
+  int n;
+  int fd = open(path, 0);
+  if (fd < 0) {
+    printf(2, "cat: cannot open %s\n", path);
+    exit();
+  }
+
+  while((n = read(fd, buf, sizeof(buf))) > 0);
+  // write(1, buf, n);
+  if(n < 0){
+    printf(2, "cat: read error\n");
+    exit();
+  }
+}
+
 int
-create_new_proc(int n) {
+create_new_loop_proc(int n) {
   int pid = fork();
   if (pid < 0) {
-    printf(2, "scheduler_benchmark : create_new_proc failed.\n");
+    printf(2, "scheduler_benchmark : create_new_loop_proc failed.\n");
     exit();
   } else if (pid == 0) {
     empty_loop(n);
+    exit();
+  }
+  return pid;
+}
+
+int
+create_new_io_proc(char *path) {
+  int pid = fork();
+  if (pid < 0) {
+    printf(2, "scheduler_benchmark : create_new_io_proc failed.\n");
+    exit();
+  } else if (pid == 0) {
+    read_then_write(path);
+    exit();
+  }
+  return pid;
+}
+
+int
+create_new_sleep_proc(int period, int n) {
+  int pid = fork();
+  if (pid < 0) {
+    printf(2, "scheduler_benchmark : create_new_sleep_proc failed.\n");
+    exit();
+  } else if (pid == 0) {
+    periodic_sleep(period, n);
     exit();
   }
   return pid;
@@ -86,7 +137,7 @@ benchmark1(int nprocs, int nloops, int period, int repeat) {
   int pid = 0;
   int ticks = 0;
   for (pi = 0; pi < nprocs; pi++) {
-    pid = create_new_proc(nloops);
+    pid = create_new_loop_proc(nloops);
     ticks = uptime();
     ptime_rcd_add_start(&ptime_rcd, pid, ticks);
 #ifdef VERBOSE
@@ -136,7 +187,7 @@ benchmark2(int longprocs, int longloops, int shortprocs, int shortloops,
   int ticks = 0;
   // create long loops
   for (pi = 0; pi < longprocs; pi++) {
-    pid = create_new_proc(longloops);
+    pid = create_new_loop_proc(longloops);
     ticks = uptime();
     ptime_rcd_add_start(&ptime_rcd, pid, ticks);
 #ifdef VERBOSE
@@ -153,10 +204,12 @@ benchmark2(int longprocs, int longloops, int shortprocs, int shortloops,
     print_proc_info(&ps, 1);
     sleep(period);
   }
+#else
+  sleep(period * repeat);
 #endif
   // create short loops
   for (pi = 0; pi < shortprocs; pi++) {
-    pid = create_new_proc(shortloops);
+    pid = create_new_loop_proc(shortloops);
     ticks = uptime();
     ptime_rcd_add_start(&ptime_rcd, pid, ticks);
 #ifdef VERBOSE
@@ -189,13 +242,71 @@ benchmark2(int longprocs, int longloops, int shortprocs, int shortloops,
   ptime_rcd_print(&ptime_rcd);
 }
 
-// TODO: CPU intensity + I/O intensity + periodically sleeping
+// CPU intensity + I/O intensity + periodically sleeping
+void
+benchmark3(int nprocs, int nloops, int t_sleep, int repeat, char* path) {
+  ptime_rcd_init(&ptime_rcd);
+  struct pstat ps;
+  int pi = 0;
+  int pid = 0;
+  int ticks = 0;
+  for (pi = 0; pi < nprocs; pi++) {
+    pid = create_new_loop_proc(nloops);
+    ticks = uptime();
+    ptime_rcd_add_start(&ptime_rcd, pid, ticks);
+#ifdef VERBOSE
+    printf(1, "create pid=%d at %d\n", pid, ticks);
+#endif
+    pid = create_new_sleep_proc(t_sleep, repeat);
+    ticks = uptime();
+    ptime_rcd_add_start(&ptime_rcd, pid, ticks);
+#ifdef VERBOSE
+    printf(1, "create pid=%d at %d\n", pid, ticks);
+#endif
+    pid = create_new_io_proc(path);
+    ticks = uptime();
+    ptime_rcd_add_start(&ptime_rcd, pid, ticks);
+#ifdef VERBOSE
+    printf(1, "create pid=%d at %d\n", pid, ticks);
+#endif
+  }
+   
+#ifdef VERBOSE
+  int t = 0;
+  // print the process table every period ticks
+  for (t = 0; t < repeat; t++) {
+    if (getpinfo(&ps) < 0) {
+      printf(2, "getpinfo: cannot get process information");
+    }
+    print_proc_info(&ps, 1);
+    sleep(period);
+  }
+#endif
+
+  for (pi = 0; pi < 3 * nprocs; pi++) {
+    pid = wait();
+    ticks = uptime();
+    if(pid < 0) {
+      printf(1, "wait stopped early\n");
+      exit();
+    }
+    ptime_rcd_add_end(&ptime_rcd, pid, ticks);
+  }
+  printf(2, "all children terminated\n");
+  if (getpinfo(&ps) < 0) {
+    printf(2, "getpinfo: cannot get process information");
+  }
+  print_proc_info(&ps, 1);
+  ptime_rcd_print(&ptime_rcd);
+
+}
 
 int
 main(int argc, char *argv[])
 {
-  benchmark1(5, 100000000, 80, 5);
-  benchmark1(61, 100000000, 200, 5);
-  benchmark2(10, 100000000, 10, 1000, 80, 2);
+  /* benchmark1(5, 100000000, 80, 5);
+  benchmark1(61, 100000000, 200, 5); */
+  // benchmark2(10, 100000000, 10, 1000000, 80, 2);
+  benchmark3(3, 100000000, 10, 10, "README");
   exit();
 }
