@@ -304,9 +304,9 @@ benchmark3(int nprocs, int nloops, int t_sleep, int repeat, char* path) {
 int
 main(int argc, char *argv[])
 {
-  /* benchmark1(5, 100000000, 80, 5);
-  benchmark1(61, 100000000, 200, 5); */
-  // benchmark2(10, 100000000, 10, 1000000, 80, 2);
+  benchmark1(5, 100000000, 80, 5);
+  benchmark1(61, 100000000, 200, 5);
+  benchmark2(10, 100000000, 10, 1000000, 80, 2);
   benchmark3(3, 100000000, 10, 10, "README");
   exit();
 }

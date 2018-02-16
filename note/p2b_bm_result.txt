@@ -1,0 +1,267 @@
+MLFQ scheduler:
+
+benchmark1: num processes=5, num loops=100000000        
+all children terminated                                 
+current ticks=464                                       
+pid=1, state=sleeping, priority=0, ticks=[1, 0, 0, 0]   
+pid=2, state=sleeping, priority=0, ticks=[0, 0, 0, 0]   
+pid=3, state=running, priority=0, ticks=[1, 0, 0, 0]    
+Total number of processes: 3                            
+process summary                                         
+pid=4, start_ticks=194, end_ticks=328, turnaround=134   
+pid=5, start_ticks=194, end_ticks=362, turnaround=168
+pid=6, start_ticks=194, end_ticks=416, turnaround=222
+pid=7, start_ticks=194, end_ticks=440, turnaround=246
+pid=8, start_ticks=195, end_ticks=464, turnaround=269
+average turnaround time=207
+benchmark1: num processes=61, num loops=100000000
+all children terminated
+current ticks=3764
+pid=1, state=sleeping, priority=0, ticks=[1, 0, 0, 0]
+pid=2, state=sleeping, priority=0, ticks=[0, 0, 0, 0]
+pid=3, state=running, priority=0, ticks=[17, 0, 0, 0]
+Total number of processes: 3
+process summary
+pid=9, start_ticks=465, end_ticks=1622, turnaround=1157
+pid=10, start_ticks=465, end_ticks=1627, turnaround=1162
+pid=11, start_ticks=466, end_ticks=1631, turnaround=1165
+pid=12, start_ticks=466, end_ticks=1636, turnaround=1170
+pid=13, start_ticks=466, end_ticks=1641, turnaround=1175                                                             
+pid=14, start_ticks=466, end_ticks=1542, turnaround=1076
+pid=15, start_ticks=466, end_ticks=1547, turnaround=1081
+pid=16, start_ticks=466, end_ticks=1553, turnaround=1087                                                             
+pid=17, start_ticks=467, end_ticks=1557, turnaround=1090                                                             
+pid=18, start_ticks=467, end_ticks=1562, turnaround=1095                                                             
+pid=19, start_ticks=467, end_ticks=1567, turnaround=1100                                                             
+pid=20, start_ticks=467, end_ticks=1572, turnaround=1105                                                             
+pid=21, start_ticks=467, end_ticks=1578, turnaround=1111
+pid=22, start_ticks=467, end_ticks=1582, turnaround=1115
+pid=23, start_ticks=518, end_ticks=1588, turnaround=1070
+pid=24, start_ticks=518, end_ticks=1595, turnaround=1077
+pid=25, start_ticks=518, end_ticks=1601, turnaround=1083                                                             
+pid=26, start_ticks=518, end_ticks=1606, turnaround=1088
+pid=27, start_ticks=518, end_ticks=1611, turnaround=1093
+pid=28, start_ticks=518, end_ticks=1616, turnaround=1098
+pid=29, start_ticks=549, end_ticks=2132, turnaround=1583
+pid=30, start_ticks=549, end_ticks=2383, turnaround=1834
+pid=31, start_ticks=549, end_ticks=2498, turnaround=1949
+pid=32, start_ticks=549, end_ticks=2709, turnaround=2160
+pid=33, start_ticks=549, end_ticks=2719, turnaround=2170                                                             
+pid=34, start_ticks=549, end_ticks=2735, turnaround=2186
+pid=35, start_ticks=650, end_ticks=2709, turnaround=2059                                                             
+pid=36, start_ticks=650, end_ticks=2709, turnaround=2059                                                             
+pid=37, start_ticks=650, end_ticks=2788, turnaround=2138                                                             
+pid=38, start_ticks=650, end_ticks=2709, turnaround=2059
+pid=39, start_ticks=650, end_ticks=2717, turnaround=2067                                                             
+pid=40, start_ticks=650, end_ticks=2727, turnaround=2077                                                             
+pid=41, start_ticks=651, end_ticks=2732, turnaround=2081                                                             
+pid=42, start_ticks=651, end_ticks=2743, turnaround=2092
+pid=43, start_ticks=651, end_ticks=2748, turnaround=2097                                                             
+pid=44, start_ticks=651, end_ticks=2753, turnaround=2102
+pid=45, start_ticks=651, end_ticks=2758, turnaround=2107
+pid=46, start_ticks=651, end_ticks=2776, turnaround=2125
+pid=47, start_ticks=652, end_ticks=2867, turnaround=2215
+pid=48, start_ticks=652, end_ticks=2891, turnaround=2239
+pid=49, start_ticks=652, end_ticks=2908, turnaround=2256
+pid=50, start_ticks=652, end_ticks=3112, turnaround=2460
+pid=51, start_ticks=652, end_ticks=3216, turnaround=2564
+pid=52, start_ticks=652, end_ticks=3374, turnaround=2722
+pid=53, start_ticks=652, end_ticks=3485, turnaround=2833
+pid=54, start_ticks=753, end_ticks=3548, turnaround=2795
+pid=55, start_ticks=753, end_ticks=3569, turnaround=2816
+pid=56, start_ticks=753, end_ticks=3590, turnaround=2837
+pid=57, start_ticks=753, end_ticks=3600, turnaround=2847
+pid=58, start_ticks=753, end_ticks=3610, turnaround=2857
+pid=59, start_ticks=753, end_ticks=3760, turnaround=3007
+pid=60, start_ticks=754, end_ticks=3723, turnaround=2969
+pid=61, start_ticks=754, end_ticks=3746, turnaround=2992
+pid=62, start_ticks=754, end_ticks=3687, turnaround=2933
+pid=63, start_ticks=754, end_ticks=3696, turnaround=2942
+pid=64, start_ticks=754, end_ticks=3705, turnaround=2951
+pid=65, start_ticks=754, end_ticks=3714, turnaround=2960
+pid=66, start_ticks=755, end_ticks=3729, turnaround=2974
+pid=67, start_ticks=755, end_ticks=3737, turnaround=2982
+pid=68, start_ticks=755, end_ticks=3760, turnaround=3005
+pid=69, start_ticks=755, end_ticks=3764, turnaround=3009
+average turnaround time=2021
+benchmark2: num processes=10 longs, 10 shorts, num loops=100000000 for long, 1000000 for short                       
+all children terminated                                 
+current ticks=4318                                      
+pid=1, state=sleeping, priority=0, ticks=[1, 0, 0, 0]   
+pid=2, state=sleeping, priority=0, ticks=[0, 0, 0, 0]   
+pid=3, state=running, priority=1, ticks=[5, 7, 0, 0]    
+Total number of processes: 3                            
+process summary                                         
+pid=70, start_ticks=3771, end_ticks=4157, turnaround=386                                                             
+pid=71, start_ticks=3771, end_ticks=4260, turnaround=489
+pid=72, start_ticks=3771, end_ticks=4271, turnaround=500                                                             
+pid=73, start_ticks=3771, end_ticks=4277, turnaround=506                                                             
+pid=74, start_ticks=3771, end_ticks=4283, turnaround=512                                                             
+pid=75, start_ticks=3771, end_ticks=4290, turnaround=519
+pid=76, start_ticks=3817, end_ticks=4297, turnaround=480                                                             
+pid=77, start_ticks=3817, end_ticks=4305, turnaround=488                                                             
+pid=78, start_ticks=3817, end_ticks=4311, turnaround=494                                                             
+pid=79, start_ticks=3817, end_ticks=4318, turnaround=501
+pid=80, start_ticks=3979, end_ticks=3983, turnaround=4                                                               
+pid=81, start_ticks=3979, end_ticks=3983, turnaround=4  
+pid=82, start_ticks=3979, end_ticks=3983, turnaround=4  
+pid=83, start_ticks=3979, end_ticks=4056, turnaround=77 
+pid=84, start_ticks=3979, end_ticks=4056, turnaround=77 
+pid=85, start_ticks=3979, end_ticks=4056, turnaround=77 
+pid=86, start_ticks=3983, end_ticks=4056, turnaround=73 
+pid=87, start_ticks=3983, end_ticks=4056, turnaround=73 
+pid=88, start_ticks=3983, end_ticks=4056, turnaround=73 
+pid=89, start_ticks=3983, end_ticks=4056, turnaround=73 
+average turnaround time=270                             
+all children terminated                                 
+current ticks=4501                                      
+pid=1, state=sleeping, priority=0, ticks=[1, 0, 0, 0]   
+pid=2, state=sleeping, priority=0, ticks=[0, 0, 0, 0]   
+pid=3, state=running, priority=1, ticks=[5, 11, 0, 0]   
+Total number of processes: 3                            
+process summary                                         
+pid=90, start_ticks=4320, end_ticks=4413, turnaround=93 
+pid=91, start_ticks=4322, end_ticks=4423, turnaround=101
+pid=92, start_ticks=4322, end_ticks=4325, turnaround=3  
+pid=93, start_ticks=4322, end_ticks=4457, turnaround=135
+pid=94, start_ticks=4322, end_ticks=4424, turnaround=102
+pid=95, start_ticks=4322, end_ticks=4325, turnaround=3  
+pid=96, start_ticks=4324, end_ticks=4501, turnaround=177
+pid=97, start_ticks=4324, end_ticks=4425, turnaround=101
+pid=98, start_ticks=4324, end_ticks=4325, turnaround=1  
+average turnaround time=79  
+
+
+
+
+round_and_robin
+benchmark1: num processes=5, num loops=100000000        
+all children terminated                                 
+current ticks=456                                       
+pid=1, state=sleeping, priority=0, ticks=[1, 0, 0, 0]   
+pid=2, state=sleeping, priority=0, ticks=[0, 0, 0, 0]   
+pid=3, state=running, priority=0, ticks=[2, 0, 0, 0]    
+Total number of processes: 3                            
+process summary                                         
+pid=4, start_ticks=148, end_ticks=455, turnaround=307   
+pid=5, start_ticks=148, end_ticks=455, turnaround=307
+pid=6, start_ticks=148, end_ticks=455, turnaround=307
+pid=7, start_ticks=148, end_ticks=456, turnaround=308
+pid=8, start_ticks=148, end_ticks=455, turnaround=307
+average turnaround time=307
+benchmark1: num processes=61, num loops=100000000
+all children terminated
+current ticks=4142
+pid=1, state=sleeping, priority=0, ticks=[1, 0, 0, 0]
+pid=2, state=sleeping, priority=0, ticks=[0, 0, 0, 0]
+pid=3, state=running, priority=2, ticks=[5, 5, 4, 0]
+Total number of processes: 3
+process summary
+pid=9, start_ticks=457, end_ticks=3875, turnaround=3418
+pid=10, start_ticks=457, end_ticks=3929, turnaround=3472
+pid=11, start_ticks=457, end_ticks=3978, turnaround=3521
+pid=12, start_ticks=457, end_ticks=3875, turnaround=3418
+pid=13, start_ticks=457, end_ticks=3929, turnaround=3472
+pid=14, start_ticks=463, end_ticks=3978, turnaround=3515
+pid=15, start_ticks=463, end_ticks=3929, turnaround=3466
+pid=16, start_ticks=463, end_ticks=4021, turnaround=3558
+pid=17, start_ticks=463, end_ticks=3929, turnaround=3466
+pid=18, start_ticks=463, end_ticks=3978, turnaround=3515
+pid=19, start_ticks=463, end_ticks=3929, turnaround=3466
+pid=20, start_ticks=475, end_ticks=4085, turnaround=3610
+pid=21, start_ticks=475, end_ticks=3978, turnaround=3503
+pid=22, start_ticks=475, end_ticks=4056, turnaround=3581
+pid=23, start_ticks=475, end_ticks=4021, turnaround=3546
+pid=24, start_ticks=475, end_ticks=3978, turnaround=3503
+pid=25, start_ticks=492, end_ticks=4107, turnaround=3615
+pid=26, start_ticks=492, end_ticks=4021, turnaround=3529
+pid=27, start_ticks=492, end_ticks=4021, turnaround=3529
+pid=28, start_ticks=492, end_ticks=4056, turnaround=3564
+pid=29, start_ticks=492, end_ticks=4021, turnaround=3529
+pid=30, start_ticks=492, end_ticks=4021, turnaround=3529
+pid=31, start_ticks=515, end_ticks=4085, turnaround=3570
+pid=32, start_ticks=515, end_ticks=4056, turnaround=3541
+pid=33, start_ticks=515, end_ticks=4056, turnaround=3541
+pid=34, start_ticks=515, end_ticks=4107, turnaround=3592
+pid=35, start_ticks=515, end_ticks=4056, turnaround=3541
+pid=36, start_ticks=543, end_ticks=4085, turnaround=3542
+pid=37, start_ticks=543, end_ticks=4056, turnaround=3513
+pid=38, start_ticks=543, end_ticks=4107, turnaround=3564
+pid=39, start_ticks=543, end_ticks=4056, turnaround=3513
+pid=40, start_ticks=543, end_ticks=4085, turnaround=3542
+pid=41, start_ticks=543, end_ticks=4056, turnaround=3513
+pid=42, start_ticks=577, end_ticks=4134, turnaround=3557
+pid=43, start_ticks=577, end_ticks=4085, turnaround=3508
+pid=44, start_ticks=577, end_ticks=4107, turnaround=3530
+pid=45, start_ticks=577, end_ticks=4085, turnaround=3508
+pid=46, start_ticks=577, end_ticks=4123, turnaround=3546
+pid=47, start_ticks=616, end_ticks=4107, turnaround=3491
+pid=48, start_ticks=616, end_ticks=4123, turnaround=3507
+pid=49, start_ticks=616, end_ticks=4107, turnaround=3491
+pid=50, start_ticks=616, end_ticks=4139, turnaround=3523
+pid=51, start_ticks=616, end_ticks=4107, turnaround=3491
+pid=52, start_ticks=660, end_ticks=4134, turnaround=3474
+pid=53, start_ticks=660, end_ticks=4123, turnaround=3463
+pid=54, start_ticks=660, end_ticks=4123, turnaround=3463
+pid=55, start_ticks=660, end_ticks=4139, turnaround=3479
+pid=56, start_ticks=660, end_ticks=4123, turnaround=3463
+pid=57, start_ticks=660, end_ticks=4123, turnaround=3463
+pid=58, start_ticks=710, end_ticks=4141, turnaround=3431
+pid=59, start_ticks=710, end_ticks=4134, turnaround=3424
+pid=60, start_ticks=710, end_ticks=4134, turnaround=3424
+pid=61, start_ticks=710, end_ticks=4139, turnaround=3429
+pid=62, start_ticks=710, end_ticks=4134, turnaround=3424
+pid=63, start_ticks=710, end_ticks=4139, turnaround=3429
+pid=64, start_ticks=766, end_ticks=4141, turnaround=3375
+pid=65, start_ticks=766, end_ticks=4139, turnaround=3373
+pid=66, start_ticks=766, end_ticks=4142, turnaround=3376
+pid=67, start_ticks=766, end_ticks=4139, turnaround=3373
+pid=68, start_ticks=766, end_ticks=4141, turnaround=3375
+pid=69, start_ticks=827, end_ticks=4142, turnaround=3315
+average turnaround time=3491
+benchmark2: num processes=10 longs, 10 shorts, num loops=100000000 for long, 1000000 for short                       
+all children terminated
+current ticks=4722
+pid=1, state=sleeping, priority=0, ticks=[1, 0, 0, 0]
+pid=2, state=sleeping, priority=0, ticks=[0, 0, 0, 0]
+pid=3, state=running, priority=3, ticks=[5, 5, 10, 4]
+Total number of processes: 3
+process summary
+pid=70, start_ticks=4148, end_ticks=4722, turnaround=574
+pid=71, start_ticks=4150, end_ticks=4719, turnaround=569
+pid=72, start_ticks=4150, end_ticks=4719, turnaround=569
+pid=73, start_ticks=4150, end_ticks=4722, turnaround=572
+pid=74, start_ticks=4150, end_ticks=4719, turnaround=569
+pid=75, start_ticks=4150, end_ticks=4719, turnaround=569
+pid=76, start_ticks=4150, end_ticks=4719, turnaround=569
+pid=77, start_ticks=4158, end_ticks=4722, turnaround=564
+pid=78, start_ticks=4158, end_ticks=4722, turnaround=564
+pid=79, start_ticks=4158, end_ticks=4722, turnaround=564
+pid=80, start_ticks=4318, end_ticks=4332, turnaround=14
+pid=81, start_ticks=4318, end_ticks=4344, turnaround=26
+pid=82, start_ticks=4318, end_ticks=4332, turnaround=14
+pid=83, start_ticks=4318, end_ticks=4344, turnaround=26
+pid=84, start_ticks=4318, end_ticks=4332, turnaround=14
+pid=85, start_ticks=4318, end_ticks=4344, turnaround=26
+pid=86, start_ticks=4332, end_ticks=4344, turnaround=12
+pid=87, start_ticks=4332, end_ticks=4354, turnaround=22
+pid=88, start_ticks=4332, end_ticks=4344, turnaround=12
+pid=89, start_ticks=4332, end_ticks=4354, turnaround=22
+average turnaround time=293
+all children terminated
+current ticks=4899
+pid=1, state=sleeping, priority=0, ticks=[1, 0, 0, 0]
+pid=2, state=sleeping, priority=0, ticks=[0, 0, 0, 0]
+pid=3, state=running, priority=3, ticks=[5, 5, 10, 8]
+Total number of processes: 3
+process summary
+pid=90, start_ticks=4725, end_ticks=4899, turnaround=174
+pid=91, start_ticks=4725, end_ticks=4848, turnaround=123
+pid=92, start_ticks=4725, end_ticks=4746, turnaround=21
+pid=93, start_ticks=4725, end_ticks=4898, turnaround=173
+pid=94, start_ticks=4725, end_ticks=4848, turnaround=123
+pid=95, start_ticks=4725, end_ticks=4746, turnaround=21
+pid=96, start_ticks=4728, end_ticks=4899, turnaround=171
+pid=97, start_ticks=4728, end_ticks=4851, turnaround=123
+pid=98, start_ticks=4728, end_ticks=4746, turnaround=18
+average turnaround time=105

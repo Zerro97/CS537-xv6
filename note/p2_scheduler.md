@@ -40,3 +40,17 @@ In ``void trap(struct trapframe *tf)``[kernel/trap.c](../kernel/trap.c),
 The call chain is ``yield()``[kernel/proc.c](../kernel/proc.c) -> ``sched()``[kernel/proc.c](../kernel/proc.c) -> ``swtch(&proc->context, cpu->scheduler);``. At this point the cpu goes back to the scheduler and the next step is switchkvm(), witch sets the page table base register to kpgdir.
 
 The struct proc, struct cpu and struct context are defined in [kernel/proc.h](../kernel/proc.h).
+
+## benchmark
+| Avg Complete time | Round & Robin | Multi-level Feedback Queue |
+| ----------------- | ------------- | -------------------------- |
+| workload 1        | 307           | 207                        |
+| workload 2        | 3491          | 2021                       |
+| workload 3        | 293           | 270                        |
+| workload 4        | 105           | 79                         |
+
+
+* workload 1: 5 dry run loops (100000000 times).
+* workload 2: 61 dry run loops (100000000 times).
+* workload 3: 10 dry run loops (100000000 times) arrive at first and 10 dry run loops (1000000) arrive seconds later.
+* workload 4: 3 dry run loops, 3 read processes and 3 sleeping processes.
