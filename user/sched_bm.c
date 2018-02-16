@@ -93,7 +93,6 @@ create_new_loop_proc(int n) {
   int pid = fork();
   if (pid < 0) {
     printf(2, "scheduler_benchmark : create_new_loop_proc failed.\n");
-    exit();
   } else if (pid == 0) {
     empty_loop(n);
     exit();
@@ -106,7 +105,6 @@ create_new_io_proc(char *path) {
   int pid = fork();
   if (pid < 0) {
     printf(2, "scheduler_benchmark : create_new_io_proc failed.\n");
-    exit();
   } else if (pid == 0) {
     read_then_write(path);
     exit();
@@ -119,7 +117,6 @@ create_new_sleep_proc(int period, int n) {
   int pid = fork();
   if (pid < 0) {
     printf(2, "scheduler_benchmark : create_new_sleep_proc failed.\n");
-    exit();
   } else if (pid == 0) {
     periodic_sleep(period, n);
     exit();
@@ -136,13 +133,18 @@ benchmark1(int nprocs, int nloops, int period, int repeat) {
   int pi = 0;
   int pid = 0;
   int ticks = 0;
+  int failed_procs = 0;
   for (pi = 0; pi < nprocs; pi++) {
     pid = create_new_loop_proc(nloops);
-    ticks = uptime();
-    ptime_rcd_add_start(&ptime_rcd, pid, ticks);
+    if (pid < 0) {
+      failed_procs++;
+    } else {
+      ticks = uptime();
+      ptime_rcd_add_start(&ptime_rcd, pid, ticks);
 #ifdef VERBOSE
-    printf(1, "create pid=%d at %d\n", pid, ticks);
+      printf(1, "create pid=%d at %d\n", pid, ticks);
 #endif
+    }
   }
    
 #ifdef VERBOSE
@@ -157,12 +159,12 @@ benchmark1(int nprocs, int nloops, int period, int repeat) {
   }
 #endif
 
-  for (pi = 0; pi < nprocs; pi++) {
+  for (pi = 0; pi < nprocs - failed_procs; pi++) {
     pid = wait();
     ticks = uptime();
     if(pid < 0) {
       printf(1, "wait stopped early\n");
-      exit();
+      continue;
     }
     ptime_rcd_add_end(&ptime_rcd, pid, ticks);
   }
@@ -185,14 +187,19 @@ benchmark2(int longprocs, int longloops, int shortprocs, int shortloops,
   int pi = 0;
   int pid = 0;
   int ticks = 0;
+  int failed_procs = 0;
   // create long loops
   for (pi = 0; pi < longprocs; pi++) {
     pid = create_new_loop_proc(longloops);
-    ticks = uptime();
-    ptime_rcd_add_start(&ptime_rcd, pid, ticks);
+    if (pid < 0) {
+      failed_procs++;
+    } else {
+      ticks = uptime();
+      ptime_rcd_add_start(&ptime_rcd, pid, ticks);
 #ifdef VERBOSE
-    printf(1, "create pid=%d at %d\n", pid, ticks);
+      printf(1, "create pid=%d at %d\n", pid, ticks);
 #endif
+    }
   }
 #ifdef VERBOSE
   int t = 0;
@@ -210,11 +217,15 @@ benchmark2(int longprocs, int longloops, int shortprocs, int shortloops,
   // create short loops
   for (pi = 0; pi < shortprocs; pi++) {
     pid = create_new_loop_proc(shortloops);
-    ticks = uptime();
-    ptime_rcd_add_start(&ptime_rcd, pid, ticks);
+    if (pid < 0) {
+      failed_procs++;
+    } else {
+      ticks = uptime();
+      ptime_rcd_add_start(&ptime_rcd, pid, ticks);
 #ifdef VERBOSE
-    printf(1, "create pid=%d at %d\n", pid, ticks);
+      printf(1, "create pid=%d at %d\n", pid, ticks);
 #endif
+    }
   }
 #ifdef VERBOSE
   for (t = 0; t < repeat; t++) {
@@ -225,12 +236,12 @@ benchmark2(int longprocs, int longloops, int shortprocs, int shortloops,
     sleep(period);
   }
 #endif
-  for (pi = 0; pi < longprocs + shortprocs; pi++) {
+  for (pi = 0; pi < longprocs + shortprocs - failed_procs; pi++) {
     pid = wait();
     ticks = uptime();
     if(pid < 0) {
       printf(1, "wait stopped early\n");
-      exit();
+      continue;
     }
     ptime_rcd_add_end(&ptime_rcd, pid, ticks);
   }
@@ -305,7 +316,7 @@ int
 main(int argc, char *argv[])
 {
   benchmark1(5, 100000000, 80, 5);
-  benchmark1(61, 100000000, 200, 5);
+  benchmark1(63, 100000000, 200, 5);
   benchmark2(10, 100000000, 10, 1000000, 80, 2);
   benchmark3(3, 100000000, 10, 10, "README");
   exit();
