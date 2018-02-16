@@ -12,6 +12,7 @@ USER_PROGS := \
 	ls\
 	mkdir\
 	rm\
+	sched_bm\
 	sh\
 	stressfs\
 	syscallptest\

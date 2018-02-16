@@ -41,6 +41,7 @@ allocproc(void)
 {
   struct proc *p;
   char *sp;
+  int priori;
 
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -53,7 +54,10 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->priority = 0;
-  p->ticks_used = 0;
+  for (priori = 0; priori < NPRIOR; priori++) {
+    p->ticks_used[priori] = 0;
+  }
+  
   release(&ptable.lock);
 
   // Allocate kernel stack if possible.
@@ -265,23 +269,34 @@ void
 scheduler(void)
 {
   struct proc *p;
-  uchar priority = 0;
+  int priority = 0;
+  int ticks_copy = 0;
 
   for(;;){
     // Enable interrupts on this processor.
     sti();
+
+    acquire(&tickslock);
+    ticks_copy = ticks;
+    release(&tickslock);
     
+    acquire(&ptable.lock);
+
     // boost the priority after long time starvation
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-      if (p->state == RUNNABLE && p->priority == NPRIOR - 1 &&
-          p->last_sched_time + TSTARV <= ticks) {
+      if (p->state == RUNNABLE && 0 < p->priority &&
+          p->last_sched_time + TSTARV < ticks_copy) {
         p->priority--;
+        // for debug purpose
+        /* cprintf("boost the priority of pid=%d, new priority=%d, current ticks=%d, last sched=%d\n",
+            p->pid, p->priority, ticks_copy, p->last_sched_time); */
       }
     }
 
     // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
-    for (priority = 0; priority < NPRIOR; priority++) {
+    priority = 0;
+    while (priority < NPRIOR) {
+    // for (priority = 0; priority < NPRIOR; priority++) {
       for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
         if(p->state != RUNNABLE || p->priority != priority)
           continue;
@@ -292,14 +307,21 @@ scheduler(void)
         proc = p;
         switchuvm(p);
         p->state = RUNNING;
+        p->last_sched_time = ticks_copy;
+        /* if (p->priority == 3) {
+          cprintf("schedule pid=%d at %d\n", p->pid, ticks_copy);
+        } */
         swtch(&cpu->scheduler, proc->context);
         switchkvm();
-
+        
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         proc = 0;
+        goto newround;
       }
+      priority++;
     }
+newround:
     release(&ptable.lock);
 
   }
@@ -330,10 +352,13 @@ sched(void)
 // a locked region.
 void
 update_ticks(void) {
-  proc->ticks_used++;
-  if (proc->priority < 3 &&
-      proc->ticks_used >= tick_quota[proc->priority]) {
+  proc->ticks_used[proc->priority]++;
+  proc->ticks++;
+  if (proc->priority < NPRIOR - 1 &&
+      proc->ticks >= tick_quota[proc->priority]) {
     proc->priority++;
+    proc->ticks = 0;
+    // cprintf("update ticks:pid=%d, priority=%d, ticks=%d\n", proc->pid, proc->priority, proc->ticks);
   }
 }
 
@@ -483,15 +508,16 @@ getpinfo(struct pstat* ps) {
   int pi = 0;
   struct proc* pptr;
   for (i = 0; i < NPROC; i++) {
-    pptr = ptable.proc + i;
+    pptr = &ptable.proc[i];
     ps->inuse[i] = (pptr->state != UNUSED);
     ps->pid[i] = pptr->pid;
+    // cprintf("copy priority: pid=%d, priority=%d\n", pptr->pid, pptr->priority);
     ps->priority[i] = pptr->priority;
     ps->state[i] = pptr->state;
     for (pi = 0; pi < pptr->priority; pi++) {
       ps->ticks[i][pi] = tick_quota[pi];
     }
-    ps->ticks[i][pptr->priority] = pptr->ticks_used;
+    ps->ticks[i][pptr->priority] = pptr->ticks_used[pptr->priority];
     for (pi = pptr->priority + 1; pi < NPRIOR; pi++) {
       ps->ticks[i][pi] = 0;
     }

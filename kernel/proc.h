@@ -77,8 +77,9 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 
-  uchar priority;              // priority p2b
-  uint ticks_used;             // number of ticks used under the current priority
+  int priority;              // priority p2b
+  uint ticks;                  // ticks used under the current priority
+  uint ticks_used[NPRIOR];     // number of ticks used history
   uint last_sched_time;        // by ticks
 };
 

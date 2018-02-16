@@ -43,6 +43,7 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+void print_proc_info(struct pstat*, int);
 
 #endif // _USER_H_
 

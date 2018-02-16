@@ -56,3 +56,7 @@ The alltraps is defined in [kernel/trapasm.S](../kernel/trapasm.S), which calls 
     }
 
 The syscall will get its number from the %eax register and call the function syscalls\[num\](). The syscalls is an array of functions (the initialization of the array uses [Designated Initializers](https://gcc.gnu.org/onlinedocs/gcc-4.0.4/gcc/Designated-Inits.html)) defined just above the syscall function and declared in [kernel/sysfunc.h](../kernel/sysfunc.h). The system call will put the return value in %eax.
+
+
+## Parameters
+The parameters of a system call, if given, are still pushed into the user stack. The kernel can locate the stack by ``proc->tf->esp``. Check ``argint, argptr, argstr`` in [kernel/syscall.c](../kernel/syscall.c).
