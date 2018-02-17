@@ -364,3 +364,19 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
   }
   return 0;
 }
+
+
+// p3b
+void*
+shmgetat(int key, int num_pages)
+{
+  cprintf("calling shmgetat(%d, %d)\n", key, num_pages);
+  return 0;
+}
+
+int
+shm_refcount(int key)
+{
+  cprintf("calling shm_refcount(%d)\n", key);
+  return 0;
+}

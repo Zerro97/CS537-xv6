@@ -222,6 +222,11 @@ Finally, it modified the ``struct proc``, setting the page table, size, EIP, ESP
     freevm(oldpgdir);
 
 
+## About the project
+system call ``void *shmgetat(int key, int num_pages)``
+
+* interface: if processes call shmgetat() with the same key for the first argument, then they will share the specified number of physical pages
+* implementation: shmgetat should map the shared phyiscal pages to the next available virtual pages, starting at the high end of that process' address space. 
 
 ## Miscs
 ### Page alignment
@@ -232,3 +237,4 @@ As PGSIZE is a power of 2. Without loss of the generality assume PGSIZE = 0x0000
 * ``#define PGROUNDDOWN(a) ((char*)((((unsigned int)(a)) & ~(PGSIZE-1))))``
 
 Similar to PGROUNDUP, this function just set the lowest 12 bits zeros.
+

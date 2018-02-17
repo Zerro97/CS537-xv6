@@ -25,5 +25,7 @@
 #define SYS_uptime         21
 #define SYS_getnumsyscallp 22
 #define SYS_getpinfo       23
+#define SYS_shmgetat       24
+#define SYS_shm_refcount   25
 
 #endif // _SYSCALL_H_

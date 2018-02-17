@@ -16,6 +16,7 @@ USER_PROGS := \
 	sh\
 	stressfs\
 	syscallptest\
+	test_shm\
 	tester\
 	usertests\
 	wc\

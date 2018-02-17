@@ -27,8 +27,11 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int getnumsyscallp(void);
-int getpinfo(struct pstat*);
+int getnumsyscallp(void);        // p1b
+int getpinfo(struct pstat*);     // p2b
+void *shmgetat(int key, int num_pages); // p3b
+int shm_refcount(int key);       // p3b
+
 
 // user library functions (ulib.c)
 int stat(char*, struct stat*);

@@ -25,5 +25,7 @@ int sys_write(void);
 int sys_uptime(void);
 int sys_getnumsyscallp(void);
 int sys_getpinfo(void);
+int sys_shmgetat(void);
+int sys_shm_refcount(void);
 
 #endif // _SYSFUNC_H_
