@@ -172,6 +172,7 @@ void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void*           shmgetat(int, int);
 int             shm_refcount(int);
+void            shm_init(void);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

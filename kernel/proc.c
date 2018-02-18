@@ -53,6 +53,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->shm = USERTOP;
   p->priority = 0;
   for (priori = 0; priori < NPRIOR; priori++) {
     p->ticks_used[priori] = 0;

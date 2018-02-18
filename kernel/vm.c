@@ -10,6 +10,17 @@ extern char data[];  // defined in data.S
 
 static pde_t *kpgdir;  // for use in scheduler()
 
+#define MAX_SHM_PGNUM  (4)
+#define MAX_SHM_KEY    (8)
+
+struct shared_mem {
+  int count_;
+  int num_pages_;
+  void* phys_addr_[MAX_SHM_PGNUM];
+};
+
+struct shared_mem shm_tab[MAX_SHM_KEY];
+
 // Allocate one page table for the machine for the kernel address
 // space for scheduler processes.
 void
@@ -367,16 +378,156 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
 
 
 // p3b
-void*
-shmgetat(int key, int num_pages)
+void
+shm_init()
 {
-  cprintf("calling shmgetat(%d, %d)\n", key, num_pages);
+  int i = 0;
+  for (i = 0; i < MAX_SHM_KEY; i++) {
+    shm_tab[i].count_ = 0;
+  }
+}
+
+int
+shm_add(int key, int num_pages, void* phys_addr[MAX_SHM_PGNUM])
+{
+  int i;
+  // sanity check
+  if (key < 0 || MAX_SHM_KEY <= key ||
+      num_pages < 0 || MAX_SHM_PGNUM < num_pages) {
+    return -1;
+  }
+  shm_tab[key].count_ = 1;
+  shm_tab[key].num_pages_ = num_pages;
+  for (i = 0; i < num_pages; i++) {
+    shm_tab[key].phys_addr_[i] = phys_addr[i];
+  }
   return 0;
 }
 
 int
+deallocshm(pde_t *pgdir, uint old_shm, uint new_shm)
+{
+  pte_t *pte;
+  uint a, pa;
+
+  if (new_shm <= old_shm)
+    return old_shm;
+
+  a = (uint)PGROUNDDOWN(new_shm - PGSIZE);
+  for(; old_shm <= a; a -= PGSIZE){
+    pte = walkpgdir(pgdir, (char*)a, 0);
+    if(pte && (*pte & PTE_P) != 0){
+      pa = PTE_ADDR(*pte);
+      if(pa == 0)
+        panic("kfree");
+      kfree((char*)pa);
+      *pte = 0;
+    }
+  }
+  return new_shm;
+}
+
+// Allocate shared memory. Similar to allocuvm but the sz pointer goes downward
+int
+allocshm(pde_t *pgdir, uint old_shm, uint new_shm, uint sz/*proc->sz*/,
+    void *phys_addr[MAX_SHM_PGNUM])
+{
+  char *mem;
+  uint a;
+  int i;
+
+  if (old_shm & 0xFFF || new_shm & 0xFFF ||
+      old_shm > USERTOP || new_shm < sz)
+    return 0;
+
+  for(i = 0, a = new_shm; a < old_shm; a += PGSIZE, i++){
+    mem = kalloc();
+    if(mem == 0){
+      cprintf("allocshm out of memory\n");
+      deallocshm(pgdir, new_shm, old_shm);
+      return 0;
+    }
+    memset(mem, 0, PGSIZE);
+    mappages(pgdir, (char*)a, PGSIZE, PADDR(mem), PTE_W|PTE_U);
+    phys_addr[i] = mem;
+  }
+  return new_shm;
+}
+
+// similar to allocshm, but do not kalloc new physical pages
+int
+mapshm(pde_t *pgdir, uint old_shm, uint new_shm, uint sz,
+    void **phys_addr)
+{
+  uint a;
+  int i;
+
+  if (old_shm & 0xFFF || new_shm & 0xFFF ||
+      old_shm > USERTOP || new_shm < sz)
+    return 0;
+
+  for(i = 0, a = new_shm; a < old_shm; a += PGSIZE, i++){
+    mappages(pgdir, (char*)a, PGSIZE, PADDR(phys_addr[i]), PTE_W|PTE_U);
+  }
+  return new_shm;
+}
+
+
+
+void*
+shmgetat(int key, int num_pages)
+{
+  pde_t *pgdir;
+  void *phys_addr[MAX_SHM_PGNUM];
+  uint shm;
+  int i;
+  cprintf("calling shmgetat(%d, %d)\n", key, num_pages);
+  if (key < 0 || MAX_SHM_KEY <= key ||
+      num_pages < 0 || MAX_SHM_PGNUM < num_pages) {
+    return (void*)-1;   // invalid arguments
+  }
+  pgdir = proc->pgdir;
+  shm = proc->shm;
+  if (shm_tab[key].count_ == 0) {
+    shm = allocshm(pgdir, shm, shm - num_pages * PGSIZE, proc->sz, phys_addr);
+    if (shm == 0) {
+      return (void*)-1;
+    }
+    // allocation succeeds
+    shm_add(key, num_pages, phys_addr);
+  } else {
+    for (i = 0; i < num_pages; i++) {
+      phys_addr[i] = shm_tab[key].phys_addr_[i];
+    }
+    num_pages = shm_tab[key].num_pages_;
+    if ((shm = mapshm(pgdir, shm, shm - num_pages * PGSIZE,
+            proc->sz, phys_addr)) == 0) {
+      return (void*)-1;
+    }
+    shm_tab[key].count_++;
+  }
+  proc->shm = shm;
+  return (void*)shm;
+}
+
+int
+shm_rm(int key)
+{
+  int i;
+  if (key < 0 || MAX_SHM_KEY <= key) {
+    return -1;
+  }
+  struct shared_mem* shmem = &shm_tab[key];
+  for (i = 0; i < shmem->num_pages_; i++) {
+    kfree((char*) shmem->phys_addr_[i]);
+  }
+  shmem->count_ = 0;
+  return 0;
+}
+
+
+int
 shm_refcount(int key)
 {
-  cprintf("calling shm_refcount(%d)\n", key);
-  return 0;
+  return (key < 0 || MAX_SHM_KEY <= key) ? -1 : shm_tab[key].count_;
 }

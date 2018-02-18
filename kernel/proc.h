@@ -81,6 +81,8 @@ struct proc {
   uint ticks;                  // ticks used under the current priority
   uint ticks_used[NPRIOR];     // number of ticks used history
   uint last_sched_time;        // by ticks
+  
+  uint shm;                    // the lower boundary of shared memory
 };
 
 // Process memory is laid out contiguously, low addresses first:
