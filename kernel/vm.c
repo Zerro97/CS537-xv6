@@ -6,12 +6,13 @@
 #include "proc.h"
 #include "elf.h"
 
-extern char data[];  // defined in data.S
-
-static pde_t *kpgdir;  // for use in scheduler()
-
 #define MAX_SHM_PGNUM  (4)
 #define MAX_SHM_KEY    (8)
+
+extern char data[];  // defined in data.S
+
+
+static pde_t *kpgdir;  // for use in scheduler()
 
 struct shared_mem {
   int count_;
@@ -242,7 +243,7 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
   char *mem;
   uint a;
 
-  if(newsz > USERTOP)
+  if(newsz > proc->shm)
     return 0;
   if(newsz < oldsz)
     return oldsz;
@@ -297,7 +298,7 @@ freevm(pde_t *pgdir)
 
   if(pgdir == 0)
     panic("freevm: no pgdir");
-  deallocuvm(pgdir, USERTOP, 0);
+  deallocuvm(pgdir, proc->shm, 0);
   for(i = 0; i < NPDENTRIES; i++){
     if(pgdir[i] & PTE_P)
       kfree((char*)PTE_ADDR(pgdir[i]));
@@ -378,6 +379,7 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
 
 
 // p3b
+
 void
 shm_init()
 {
@@ -385,6 +387,15 @@ shm_init()
   for (i = 0; i < MAX_SHM_KEY; i++) {
     shm_tab[i].count_ = 0;
   }
+}
+
+int
+shm_key_used(int key, uint mask)
+{
+  if (key < 0 || MAX_SHM_KEY <= key) {
+    return 0;
+  }
+  return (mask >> key) & 0x1;
 }
 
 int
@@ -402,6 +413,15 @@ shm_add(int key, int num_pages, void* phys_addr[MAX_SHM_PGNUM])
     shm_tab[key].phys_addr_[i] = phys_addr[i];
   }
   return 0;
+}
+
+void
+shm_add_count(uint mask) {
+  int key;
+  for (key = 0; key < MAX_SHM_KEY; key++) {
+    if (shm_key_used(key, mask))
+      shm_tab[key].count_++;
+  }
 }
 
 int
@@ -454,6 +474,28 @@ allocshm(pde_t *pgdir, uint old_shm, uint new_shm, uint sz/*proc->sz*/,
   return new_shm;
 }
 
+// Similar to copyuvm, but the copy of shared mem is shallow
+// assume the pgdir_dst does not have shared memory before the copy.
+int
+copyshm(pde_t *pgdir_src, uint shm, pde_t *pgdir_dst)
+{
+  pte_t *pte;
+  uint pa, i;
+
+  for (i = shm; i < USERTOP; i++) {
+    if ((pte = walkpgdir(pgdir_src, (void*)i, 0)) == 0)
+      panic("copyshm: pte should exist");
+    if (!(*pte & PTE_P))
+      panic("copyshm: page not present");
+    pa = PTE_ADDR(*pte);
+    if (mappages(pgdir_dst, (void*)i, PGSIZE, pa, PTE_W|PTE_U) < 0) {
+      deallocshm(pgdir_dst, shm, USERTOP);
+      return -1;
+    }
+  }
+  return 0;
+}
+
 // similar to allocshm, but do not kalloc new physical pages
 int
 mapshm(pde_t *pgdir, uint old_shm, uint new_shm, uint sz,
@@ -471,8 +513,6 @@ mapshm(pde_t *pgdir, uint old_shm, uint new_shm, uint sz,
   }
   return new_shm;
 }
-
-
 
 void*
 shmgetat(int key, int num_pages)
@@ -495,6 +535,7 @@ shmgetat(int key, int num_pages)
     }
     // allocation succeeds
     shm_add(key, num_pages, phys_addr);
+    proc->shm_key_mask |= 1 << key;
   } else {
     for (i = 0; i < num_pages; i++) {
       phys_addr[i] = shm_tab[key].phys_addr_[i];
@@ -522,6 +563,23 @@ shm_rm(int key)
     kfree((char*) shmem->phys_addr_[i]);
   }
   shmem->count_ = 0;
+  return 0;
+}
+
+// similar to freevm
+int
+shm_release(pde_t *pgdir, uint shm, uint key_mask)
+{
+  int k;
+  deallocshm(pgdir, shm, USERTOP);
+  for (k = 0; k < MAX_SHM_KEY; k++) {
+    if (shm_key_used(k, key_mask)) {
+      shm_tab[k].count_--;
+      if (shm_tab[k].count_ == 0) {
+        shm_rm(k);
+      }
+    }
+  }
   return 0;
 }
 

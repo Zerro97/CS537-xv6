@@ -54,6 +54,7 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->shm = USERTOP;
+  p->shm_key_mask = 0;
   p->priority = 0;
   for (priori = 0; priori < NPRIOR; priori++) {
     p->ticks_used[priori] = 0;
@@ -149,12 +150,16 @@ fork(void)
     return -1;
 
   // Copy process state from p.
-  if((np->pgdir = copyuvm(proc->pgdir, proc->sz)) == 0){
+  if ((np->pgdir = copyuvm(proc->pgdir, proc->sz)) == 0
+      || copyshm(proc->pgdir, proc->shm, np->pgdir) < 0) {
     kfree(np->kstack);
     np->kstack = 0;
     np->state = UNUSED;
     return -1;
   }
+  // add reference counts for shared mem
+  shm_add_count(proc->shm_key_mask);
+  
   np->sz = proc->sz;
   np->parent = proc;
   *np->tf = *proc->tf;
@@ -237,7 +242,14 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
+        shm_release(p->pgdir, p->shm, p->shm_key_mask); 
+        p->shm = USERTOP;
+        p->shm_key_mask = 0;
         freevm(p->pgdir);
+        // Release shared memory
+        proc->shm = USERTOP;
+        proc->shm_key_mask = 0;
+
         p->state = UNUSED;
         p->pid = 0;
         p->parent = 0;

@@ -77,12 +77,13 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 
-  int priority;              // priority p2b
+  int priority;                // priority p2b
   uint ticks;                  // ticks used under the current priority
   uint ticks_used[NPRIOR];     // number of ticks used history
   uint last_sched_time;        // by ticks
   
   uint shm;                    // the lower boundary of shared memory
+  uint shm_key_mask;           // mask of key usage
 };
 
 // Process memory is laid out contiguously, low addresses first:

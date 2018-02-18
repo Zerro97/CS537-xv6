@@ -80,8 +80,14 @@ exec(char *path, char **argv)
       last = s+1;
   safestrcpy(proc->name, last, sizeof(proc->name));
 
-  // Commit to the user image.
+  
   oldpgdir = proc->pgdir;
+  // release the shared memory
+  shm_release(oldpgdir, proc->shm, proc->shm_key_mask); 
+  proc->shm = USERTOP;
+  proc->shm_key_mask = 0;
+
+  // Commit to the user image.
   proc->pgdir = pgdir;
   proc->sz = sz;
   proc->tf->eip = elf.entry;  // main
@@ -92,8 +98,9 @@ exec(char *path, char **argv)
   return 0;
 
  bad:
-  if(pgdir)
+  if(pgdir) {
     freevm(pgdir);
+  }
   if(ip)
     iunlockput(ip);
   return -1;
