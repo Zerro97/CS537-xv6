@@ -67,6 +67,7 @@ void            ioapicinit(void);
 char*           kalloc(void);
 void            kfree(char*);
 void            kinit(void);
+int             getfreecount(void);
 
 // kbd.c
 void            kbdintr(void);
@@ -176,6 +177,8 @@ void            shm_init(void);
 int             copyshm(pde_t*, uint, pde_t*);
 int             shm_release(pde_t*, uint, uint);
 void            shm_add_count(uint);
+int             shm_key_used(int, uint);
+
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

@@ -15,6 +15,7 @@ struct run {
 struct {
   struct spinlock lock;
   struct run *freelist;
+  int freecount;
 } kmem;
 
 extern char end[]; // first address after kernel loaded from ELF file
@@ -26,9 +27,12 @@ kinit(void)
   char *p;
 
   initlock(&kmem.lock, "kmem");
+  kmem.freecount = 0;
   p = (char*)PGROUNDUP((uint)end);
-  for(; p + PGSIZE <= (char*)PHYSTOP; p += PGSIZE)
+  for(; p + PGSIZE <= (char*)PHYSTOP; p += PGSIZE) {
     kfree(p);
+    kmem.freecount++;
+  }
 }
 
 // Free the page of physical memory pointed at by v,
@@ -40,7 +44,7 @@ kfree(char *v)
 {
   struct run *r;
 
-  if((uint)v % PGSIZE || v < end || (uint)v >= PHYSTOP) 
+  if((uint)v % PGSIZE || v < end || (uint)v >= PHYSTOP)
     panic("kfree");
 
   // Fill with junk to catch dangling refs.
@@ -48,8 +52,12 @@ kfree(char *v)
 
   acquire(&kmem.lock);
   r = (struct run*)v;
+  if ((uint)kmem.freelist > PHYSTOP) {
+    cprintf("p3b kfree error: kmem.freelist=%x > PHYSTOP\n", kmem.freelist);
+  }
   r->next = kmem.freelist;
   kmem.freelist = r;
+  kmem.freecount++;
   release(&kmem.lock);
 }
 
@@ -63,9 +71,25 @@ kalloc(void)
 
   acquire(&kmem.lock);
   r = kmem.freelist;
-  if(r)
+  if ((uint)r > PHYSTOP) {
+    cprintf("p3b error: kalloc mem exceed PHYSTOP %x, free pages:%d\n", r, kmem.freecount);
+  }
+  if(r) {
     kmem.freelist = r->next;
+    kmem.freecount--;
+  }
   release(&kmem.lock);
   return (char*)r;
 }
 
+
+// p3b
+int
+getfreecount(void)
+{
+  int fc;
+  acquire(&kmem.lock);
+  fc = kmem.freecount;
+  release(&kmem.lock);
+  return fc;
+}
