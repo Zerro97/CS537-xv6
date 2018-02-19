@@ -202,13 +202,29 @@ test_fork(void)
   }
 }
 
+void
+test_exec(void)
+{
+  printf(1, "test_exec\n");
+  char *a;
+  char *argv[1];
+  a = shmgetat(0, 1);
+  if ((uint)a != MAX_MEM - SHM_SIZE) {
+    printf(2, "test fork: failed. address of a: %x, expected: %x\n",
+        a, MAX_MEM - SHM_SIZE);
+  }
+  argv[0] = "test_shm_exec";
+  exec(argv[0], argv);
+}
+
+
 int
 main(int argc, char *argv[])
 {
   create_new_proc(test_single_proc);
   create_new_proc(test_single_proc2);
   create_new_proc(test_fork);
-  
+  create_new_proc(test_exec);
 
   exit();
 }

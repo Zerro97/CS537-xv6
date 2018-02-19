@@ -52,9 +52,6 @@ kfree(char *v)
 
   acquire(&kmem.lock);
   r = (struct run*)v;
-  if ((uint)kmem.freelist > PHYSTOP) {
-    cprintf("p3b kfree error: kmem.freelist=%x > PHYSTOP\n", kmem.freelist);
-  }
   r->next = kmem.freelist;
   kmem.freelist = r;
   kmem.freecount++;
@@ -71,9 +68,6 @@ kalloc(void)
 
   acquire(&kmem.lock);
   r = kmem.freelist;
-  if ((uint)r > PHYSTOP) {
-    cprintf("p3b error: kalloc mem exceed PHYSTOP %x, free pages:%d\n", r, kmem.freecount);
-  }
   if(r) {
     kmem.freelist = r->next;
     kmem.freecount--;
