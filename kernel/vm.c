@@ -452,8 +452,6 @@ deallocshm(pde_t *pgdir, uint old_shm, uint new_shm)
       pa = PTE_ADDR(*pte);
       if(pa == 0)
         panic("kfree"); 
-      /* cprintf("p3b deallocuvm: free pa=%x\n", pa);*/
-      // kfree((char*)pa); problem free twice, the other is in shm_rm
       *pte = 0;
     }
   }
@@ -469,7 +467,6 @@ allocshm(pde_t *pgdir, uint old_shm, uint new_shm, uint sz/*proc->sz*/,
   uint a;
   int i;
 
-  cprintf("p3b allocshm: old_shm = %x, new_shm = %x\n", old_shm, new_shm);
   if (old_shm & 0xFFF || new_shm & 0xFFF ||
       old_shm > USERTOP || new_shm < sz)
     return 0;
@@ -482,7 +479,6 @@ allocshm(pde_t *pgdir, uint old_shm, uint new_shm, uint sz/*proc->sz*/,
       return 0;
     }
     memset(mem, 0, PGSIZE);
-    cprintf("p3b mappage: la=%x, ph=%x\n", a, mem);
     mappages(pgdir, (char*)a, PGSIZE, PADDR(mem), PTE_W|PTE_U);
     phys_addr[i] = mem;
   }
@@ -536,7 +532,6 @@ shmgetat(int key, int num_pages)
   void *phys_addr[MAX_SHM_PGNUM];
   uint shm;
   int i;
-  cprintf("calling shmgetat(%d, %d)\n", key, num_pages);
   if (key < 0 || MAX_SHM_KEY <= key ||
       num_pages < 0 || MAX_SHM_PGNUM < num_pages) {
     return (void*)-1;   // invalid arguments
@@ -544,7 +539,6 @@ shmgetat(int key, int num_pages)
   pgdir = proc->pgdir;
   shm = proc->shm;
   if (proc->shm_key_mask >> key & 1) {
-    cprintf("p3b pid=%x, key already allocated, va=%x\n", proc->pid, proc->shm_va[key]);
     return proc->shm_va[key];
   }
   // acquire(&shm_lock);
@@ -571,7 +565,6 @@ shmgetat(int key, int num_pages)
   // release(&shm_lock);
   proc->shm = shm;
   proc->shm_key_mask |= 1 << key;
-  cprintf("p3b shmgetat succeeds, pid=%x, shm=%x, mask=%x\n", proc->pid, shm, proc->shm_key_mask);
   return (void*)shm;
 }
 
@@ -584,7 +577,6 @@ shm_rm(int key)
   }
   struct shared_mem* shmem = &shm_tab[key];
   for (i = 0; i < shmem->num_pages_; i++) {
-    cprintf("shm: free pa: %x\n", shmem->phys_addr_[i]);
     kfree((char*) shmem->phys_addr_[i]);
   }
   shmem->count_ = 0;

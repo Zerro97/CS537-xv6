@@ -167,7 +167,6 @@ fork(void)
     if (shm_key_used(i, np->shm_key_mask))
       np->shm_va[i] = proc->shm_va[i];
   }
-  cprintf("p3b fork np: pid=%d, shm:%x, key_mask:%x\n", np->pid, np->shm, np->shm_key_mask);
   
   np->sz = proc->sz;
   np->parent = proc;
@@ -251,7 +250,6 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        cprintf("p3b wait p: id=%d, shm:%x, key_mask:%x\n", p->pid, p->shm, p->shm_key_mask);
         // Release shared memory
         shm_release(p->pgdir, p->shm, p->shm_key_mask); 
         p->shm = USERTOP;
@@ -264,7 +262,6 @@ wait(void)
         p->name[0] = 0;
         p->killed = 0;
         release(&ptable.lock);
-        cprintf("p3b wait, pid=%d, free phys pages: %d\n", pid, getfreecount());
         return pid;
       }
     }
