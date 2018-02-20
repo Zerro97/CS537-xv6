@@ -4,6 +4,7 @@
 #include "param.h"
 #include "mmu.h"
 #include "x86.h"
+#include "thread.h"
 #include "proc.h"
 #include "spinlock.h"
 
@@ -72,7 +73,7 @@ found:
   // Leave room for trap frame.
   sp -= sizeof *p->tf;
   p->tf = (struct trapframe*)sp;
-  
+
   // Set up new context to start executing at forkret,
   // which returns to trapret.
   sp -= 4;
@@ -540,4 +541,71 @@ getpinfo(struct pstat* ps) {
       ps->ticks[i][pi] = 0;
     }
   }
+}
+
+
+// p4b
+int
+clone(thread_func fcn, void *arg, void *stack)
+{
+  cprintf("calling clone\n");
+  int i, pid;
+  uint sp, sz, ustack[2];
+  struct proc *np;
+
+  // Allocate process.
+  if((np = allocproc()) == 0)
+    return -1;
+
+  // Copy process state from p
+  np->pgdir = proc->pgdir;
+  
+  // p4b pretending this is clone not fork
+  // set up new user stack
+  // and registers (np->tf->eip, np->tf->esp)
+  
+  // proc struct shm record
+  np->shm = proc->shm;
+  np->shm_key_mask = proc->shm_key_mask;
+  for (i = 0; i < MAX_SHM_KEY; i++) {
+    if (shm_key_used(i, np->shm_key_mask))
+      np->shm_va[i] = proc->shm_va[i];
+  }
+  
+  sz = proc->sz;
+  np->parent = proc;
+  *np->tf = *proc->tf;
+
+  // Clear %eax so that fork returns 0 in the child.
+  np->tf->eax = 0;
+
+  for(i = 0; i < NOFILE; i++)
+    if(proc->ofile[i])
+      np->ofile[i] = filedup(proc->ofile[i]);
+  np->cwd = idup(proc->cwd);
+ 
+  pid = np->pid;
+  np->state = RUNNABLE;
+  safestrcpy(np->name, proc->name, sizeof(proc->name));
+
+  // initialize the stack
+  sp = (uint)stack + PGSIZE - 8U;
+  ustack[1] = (uint)arg;
+  ustack[0] = 0xffffffff;
+  if (copyout(np->pgdir, sp, (void*)ustack, sizeof(uint) * 2) < 0) {
+    cprintf("clone: copy stack failed\n");
+    return -1;
+  }
+  np->tf->esp = sp;
+  np->tf->eip = (uint)fcn;
+  np->sz = sz > (uint)stack ? sz : (uint)stack;
+
+  return pid;
+}
+
+int
+join(void **stack)
+{
+  cprintf("calling join");
+  return 0;
 }

@@ -146,3 +146,36 @@ print_proc_info(struct pstat* ps, int verbose)
   }
   printf(1, "Total number of processes: %d\n", count);
 }
+
+
+// p4b
+int
+thread_create(thread_func start_routine, void *arg)
+{
+  void *ptr_s, *stack;
+  uint page_size = 4096U;
+  ptr_s = malloc(page_size * 2);
+  if (ptr_s == 0) {
+    printf(2, "thread_create: no enough memory for stack");
+    return -1;
+  }
+  stack = (void*)(((uint)ptr_s + page_size) & ~0xFFF);
+  printf(1, "thread_create stack loc: stack %x, upper bound: %x, size: %d\n",
+      stack, (uint)ptr_s + 2 * page_size, (uint)ptr_s + 2 * page_size - (uint)stack);
+  return clone(start_routine, arg, stack);
+}
+
+void
+lock_acquire(struct lock_t *lock)
+{
+}
+
+void lock_release(struct lock_t *lock)
+{
+}
+
+void lock_init(struct lock_t *lock)
+{
+  lock->locked = 0;
+}
+

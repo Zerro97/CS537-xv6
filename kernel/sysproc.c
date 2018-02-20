@@ -6,6 +6,7 @@
 #include "mmu.h"
 #include "proc.h"
 #include "sysfunc.h"
+#include "thread.h"
 
 extern int num_syscalls;
 
@@ -129,4 +130,35 @@ sys_shm_refcount(void)
     return -1;
   }
   return shm_refcount(key);
+}
+
+
+// p4b
+int
+sys_clone(void)
+{
+  thread_func fcn;
+  void *arg;
+  void *stack;
+  if (argptr(0, (char**)&fcn, sizeof(void*)) < 0) {
+    return -1;
+  }
+  if (argptr(1, (char**)&arg, sizeof(void*)) < 0) {
+    return -1;
+  }
+  if (argptr(2, (char**)&stack, sizeof(void*)) < 0) {
+    return -1;
+  }
+  
+  return clone(fcn, arg, stack);
+}
+
+int
+sys_join(void)
+{
+  void *stack;
+  if (argptr(0, (char**)&stack, sizeof(void**)) < 0) {
+    return -1;
+  }
+  return join(&stack);
 }

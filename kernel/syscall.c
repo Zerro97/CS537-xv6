@@ -110,6 +110,8 @@ static int (*syscalls[])(void) = {
 [SYS_getpinfo] sys_getpinfo,
 [SYS_shmgetat] sys_shmgetat,
 [SYS_shm_refcount] sys_shm_refcount,
+[SYS_clone]   sys_clone,
+[SYS_join]    sys_join,
 };
 
 // Called on a syscall trap. Checks that the syscall number (passed via eax)

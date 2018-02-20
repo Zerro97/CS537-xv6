@@ -2,8 +2,10 @@
 #define _USER_H_
 
 #include "pstat.h"
+#include "thread.h"
 
 struct stat;
+struct lock_t;
 
 // system calls
 int fork(void);
@@ -31,6 +33,8 @@ int getnumsyscallp(void);        // p1b
 int getpinfo(struct pstat*);     // p2b
 void *shmgetat(int key, int num_pages); // p3b
 int shm_refcount(int key);       // p3b
+int clone(void(*fcn)(void*), void*, void*);  // p4b
+int join(void**);   // p4b
 
 
 // user library functions (ulib.c)
@@ -47,6 +51,12 @@ void* malloc(uint);
 void free(void*);
 int atoi(const char*);
 void print_proc_info(struct pstat*, int);
+
+// p4b thread libs
+int thread_create(void(*start_routine)(void*), void*); 
+void lock_acquire(struct lock_t*);
+void lock_release(struct lock_t*);
+void lock_init(struct lock_t*);
 
 #endif // _USER_H_
 

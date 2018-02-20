@@ -27,5 +27,7 @@
 #define SYS_getpinfo       23
 #define SYS_shmgetat       24
 #define SYS_shm_refcount   25
+#define SYS_clone          26
+#define SYS_join           27
 
 #endif // _SYSCALL_H_

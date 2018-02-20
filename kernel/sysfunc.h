@@ -27,5 +27,7 @@ int sys_getnumsyscallp(void);
 int sys_getpinfo(void);
 int sys_shmgetat(void);
 int sys_shm_refcount(void);
+int sys_clone(void);
+int sys_join(void);
 
 #endif // _SYSFUNC_H_
