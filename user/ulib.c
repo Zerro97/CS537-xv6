@@ -149,29 +149,15 @@ print_proc_info(struct pstat* ps, int verbose)
 
 
 // p4b
-int
-thread_create(thread_func start_routine, void *arg)
-{
-  void *ptr_s, *stack;
-  uint page_size = 4096U;
-  ptr_s = malloc(page_size * 2);
-  if (ptr_s == 0) {
-    printf(2, "thread_create: no enough memory for stack");
-    return -1;
-  }
-  stack = (void*)(((uint)ptr_s + page_size) & ~0xFFF);
-  printf(1, "thread_create stack loc: stack %x, upper bound: %x, size: %d\n",
-      stack, (uint)ptr_s + 2 * page_size, (uint)ptr_s + 2 * page_size - (uint)stack);
-  return clone(start_routine, arg, stack);
-}
-
 void
 lock_acquire(struct lock_t *lock)
 {
+  while(xchg(&lock->locked, 1) != 0);
 }
 
 void lock_release(struct lock_t *lock)
 {
+  xchg(&lock->locked, 0);
 }
 
 void lock_init(struct lock_t *lock)
@@ -179,3 +165,32 @@ void lock_init(struct lock_t *lock)
   lock->locked = 0;
 }
 
+int
+thread_create(thread_func start_routine, void *arg)
+{
+  void *ptr_s, *stack;
+  uint page_size = 4096U;
+  ptr_s = malloc(page_size * 2);
+  if (ptr_s == 0) {
+    printf(2, "thread_create: no enough memory for stack\n");
+    return -1;
+  }
+  stack = (void*)(((uint)ptr_s + page_size) & ~0xFFF);
+  ((uint*)stack)[-1] = (uint)ptr_s;    // trick, stack[-1] is allocated but unused. We can use it to store the pointer
+  printf(1, "thread_create stack loc: ptr=%x, stack %x, upper bound: %x, size: %d\n",
+      ptr_s, stack, (uint)ptr_s + 2 * page_size, (uint)ptr_s + 2 * page_size - (uint)stack);
+  return clone(start_routine, arg, stack);
+}
+
+
+int
+thread_join(void)
+{
+  void *stack;
+  void *ptr_s;
+  int pid = join(&stack);
+  ptr_s = (void*) (((uint*)stack)[-1]);
+  printf(1, "join stack=%x, free ptr=%x\n", stack, ptr_s);
+  free(ptr_s);
+  return pid;
+}

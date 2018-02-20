@@ -54,6 +54,7 @@ void print_proc_info(struct pstat*, int);
 
 // p4b thread libs
 int thread_create(void(*start_routine)(void*), void*); 
+int thread_join(void);
 void lock_acquire(struct lock_t*);
 void lock_release(struct lock_t*);
 void lock_init(struct lock_t*);

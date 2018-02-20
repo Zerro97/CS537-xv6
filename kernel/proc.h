@@ -85,6 +85,8 @@ struct proc {
   uint shm;                    // the lower boundary of shared memory
   uint shm_key_mask;           // mask of key usage
   void* shm_va[MAX_SHM_KEY];   // virtual address
+
+  char *ustack;                // p4b user stack
 };
 
 // Process memory is laid out contiguously, low addresses first:

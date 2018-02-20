@@ -356,6 +356,7 @@ wait(void)
         }
 
         p->state = UNUSED;
+        p->ustack = 0;
         p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;
@@ -423,10 +424,6 @@ scheduler(void)
         // to release ptable.lock and then reacquire it
         // before jumping back to us.
         proc = p;
-        if (p->pid == 4) {
-          cprintf("thread pid = 4 is scheduled, sz=%x, esp=%x, eip=%x\n",
-              p->sz, p->tf->esp, p->tf->eip);
-        }
         switchuvm(p);
         p->state = RUNNING;
         p->last_sched_time = ticks_copy;
@@ -662,10 +659,6 @@ clone(thread_func fcn, void *arg, void *stack)
   // Copy process state from p
   np->pgdir = proc->pgdir;
   
-  // p4b pretending this is clone not fork
-  // set up new user stack
-  // and registers (np->tf->eip, np->tf->esp)
-  
   // proc struct shm record
   np->shm = proc->shm;
   np->shm_key_mask = proc->shm_key_mask;
@@ -700,6 +693,7 @@ clone(thread_func fcn, void *arg, void *stack)
     cprintf("clone: copy stack failed\n");
     return -1;
   }
+  np->ustack = (char*)stack;
   np->tf->esp = sp;
   np->tf->eip = (uint)fcn;
 
@@ -709,6 +703,57 @@ clone(thread_func fcn, void *arg, void *stack)
 int
 join(void **stack)
 {
-  cprintf("calling join");
-  return 0;
+  struct proc *p;
+  int havekids, pid;
+  int pt_count;
+
+  acquire(&ptable.lock);
+  for(;;){
+    // Scan through table looking for zombie children.
+    havekids = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->parent != proc)
+        continue;
+      if (p->pgdir != proc->pgdir)     // child process
+        continue;
+      havekids = 1;
+      if(p->state == ZOMBIE){
+        // Found one.
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        // get the user stack
+        *stack = (void*)p->ustack;
+        // Release shared memory
+        pt_count = delete_ref(p->pgdir);
+        if (pt_count < 0) {
+          cprintf("ref count of pgdir=%x is negative\n", p->pgdir);
+          panic("pgdir ref");
+        } else if (pt_count == 0) {  // last thread
+          shm_release(p->pgdir, p->shm, p->shm_key_mask); 
+          p->shm = USERTOP;
+          p->shm_key_mask = 0;
+          freevm(p->pgdir);
+        }
+
+        p->state = UNUSED;
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        release(&ptable.lock);
+        return pid;
+      }
+    }
+
+    // No point waiting if we don't have any children.
+    if(!havekids || proc->killed){
+      release(&ptable.lock);
+      return -1;
+    }
+
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(proc, &ptable.lock);  //DOC: wait-sleep
+  }
+
 }

@@ -156,9 +156,9 @@ sys_clone(void)
 int
 sys_join(void)
 {
-  void *stack;
+  void **stack;
   if (argptr(0, (char**)&stack, sizeof(void**)) < 0) {
     return -1;
   }
-  return join(&stack);
+  return join(stack);
 }
