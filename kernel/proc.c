@@ -13,6 +13,16 @@ struct {
   struct proc proc[NPROC];
 } ptable;
 
+struct pgdir_refs {
+  void* addr;
+  int count;
+};
+
+struct {
+  struct spinlock lock;
+  struct pgdir_refs refs[NPROC];
+} pgdir_table;
+
 int tick_quota[] = {5, 5, 10, 20};    // priority: 0,1,2,3
 
 static struct proc *initproc;
@@ -27,10 +37,83 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+
+// p4b
+// pgdir_refs operations
+
+void
+init_ref(void) {
+  int i;
+  initlock(&pgdir_table.lock, "pgdir_table");
+  for (i = 0; i < NPROC; i++) {
+    pgdir_table.refs[i].count = 0;
+  }
+}
+
+int
+get_count(void* pgdir)
+{
+  int i;
+  for (i = 0; i < NPROC; i++) {
+    if (pgdir_table.refs[i].count > 0 ||
+        pgdir_table.refs[i].addr == pgdir) {
+      return pgdir_table.refs[i].count;
+    }
+  }
+  return 0;
+}
+
+int
+get_index(void* pgdir)
+{
+  int i;
+  for (i = 0; i < NPROC; i++) {
+    if (pgdir_table.refs[i].count > 0 ||
+        pgdir_table.refs[i].addr == pgdir) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+void
+add_ref(void* pgdir)
+{
+  int i;
+  i = get_index(pgdir);
+  if (i < 0) {
+    for (i = 0; i < NPROC; i++) {
+      if (pgdir_table.refs[i].count == 0) {
+        pgdir_table.refs[i].count = 1;
+        pgdir_table.refs[i].addr = pgdir;
+        break;
+      }
+    }
+  } else {
+    pgdir_table.refs[i].count++;
+  }
+}
+
+// return the count after delete, -1 means failure
+int
+delete_ref(void* pgdir)
+{
+  int i;
+  for (i = 0; i < NPROC; i++) {
+    if (pgdir_table.refs[i].addr == pgdir ||
+        pgdir_table.refs[i].count > 0) {
+      pgdir_table.refs[i].count--;
+      return pgdir_table.refs[i].count;
+    }
+  }
+  return -1;
+}
+
 void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+  init_ref();
 }
 
 // Look in the process table for an UNUSED proc.
@@ -114,6 +197,9 @@ userinit(void)
   p->cwd = namei("/");
 
   p->state = RUNNABLE;
+
+  // count pgdir
+  add_ref((void*)p->pgdir);
   release(&ptable.lock);
 }
 
@@ -183,6 +269,9 @@ fork(void)
  
   pid = np->pid;
   np->state = RUNNABLE;
+
+  // p4b count pgdir
+  add_ref((void*)np->pgdir);
   safestrcpy(np->name, proc->name, sizeof(proc->name));
   return pid;
 }
@@ -237,6 +326,7 @@ wait(void)
 {
   struct proc *p;
   int havekids, pid;
+  int pt_count;
 
   acquire(&ptable.lock);
   for(;;){
@@ -245,6 +335,8 @@ wait(void)
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->parent != proc)
         continue;
+      if (p->pgdir == proc->pgdir)     // child thread
+        continue;
       havekids = 1;
       if(p->state == ZOMBIE){
         // Found one.
@@ -252,10 +344,16 @@ wait(void)
         kfree(p->kstack);
         p->kstack = 0;
         // Release shared memory
-        shm_release(p->pgdir, p->shm, p->shm_key_mask); 
-        p->shm = USERTOP;
-        p->shm_key_mask = 0;
-        freevm(p->pgdir);
+        pt_count = delete_ref(p->pgdir);
+        if (pt_count < 0) {
+          cprintf("ref count of pgdir=%x is negative\n", p->pgdir);
+          panic("pgdir ref");
+        } else if (pt_count == 0) {  // last thread
+          shm_release(p->pgdir, p->shm, p->shm_key_mask); 
+          p->shm = USERTOP;
+          p->shm_key_mask = 0;
+          freevm(p->pgdir);
+        }
 
         p->state = UNUSED;
         p->pid = 0;
@@ -325,6 +423,10 @@ scheduler(void)
         // to release ptable.lock and then reacquire it
         // before jumping back to us.
         proc = p;
+        if (p->pid == 4) {
+          cprintf("thread pid = 4 is scheduled, sz=%x, esp=%x, eip=%x\n",
+              p->sz, p->tf->esp, p->tf->eip);
+        }
         switchuvm(p);
         p->state = RUNNING;
         p->last_sched_time = ticks_copy;
@@ -550,7 +652,7 @@ clone(thread_func fcn, void *arg, void *stack)
 {
   cprintf("calling clone\n");
   int i, pid;
-  uint sp, sz, ustack[2];
+  uint sp, ustack[2];
   struct proc *np;
 
   // Allocate process.
@@ -572,7 +674,7 @@ clone(thread_func fcn, void *arg, void *stack)
       np->shm_va[i] = proc->shm_va[i];
   }
   
-  sz = proc->sz;
+  np->sz = proc->sz;
   np->parent = proc;
   *np->tf = *proc->tf;
 
@@ -586,6 +688,8 @@ clone(thread_func fcn, void *arg, void *stack)
  
   pid = np->pid;
   np->state = RUNNABLE;
+  // p4b count pgdir
+  add_ref((void*) np->pgdir);
   safestrcpy(np->name, proc->name, sizeof(proc->name));
 
   // initialize the stack
@@ -598,7 +702,6 @@ clone(thread_func fcn, void *arg, void *stack)
   }
   np->tf->esp = sp;
   np->tf->eip = (uint)fcn;
-  np->sz = sz > (uint)stack ? sz : (uint)stack;
 
   return pid;
 }
