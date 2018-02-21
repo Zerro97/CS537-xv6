@@ -18,6 +18,29 @@ The physical memory is organized as a list of free pages.
       struct run *freelist;
     } kmem;
 
+The first 4 bytes of a page are used to store the address of the next free page.
+
+<pre>
+    +-----------------+ <--- PHYSTOP (0x1000000)
+    |                 |
+    |                 |
+    +-----------------+
+    | next = 0        |
+    +-----------------+ <--+ (0xFFFF000)
+    |                 |    |
+    |                 |    |
+    +-----------------+    |
+    | next = 0xFFFF000| ---+
+    +-----------------+
+    |       ...       |
+    +-----------------+ <--+ (0x131000)
+    |                 |    |
+    |                 |    |
+    +-----------------+    |
+    | next = 0x131000 | ---+ 
+    +-----------------+ <--- freelist = 0x130000
+</pre>
+
 ``void kinit(void)`` free all pages above the end of the code section.
 
 The free function is ``void kfree(char *v)``. After some sanity checks, it overwrites the whole page with 1's and insert the page pointer ``v`` into the front of ``freelist``.
