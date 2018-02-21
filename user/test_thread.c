@@ -153,6 +153,8 @@ test_mix_fork_clone(void)
   }
 }
 
+
+
 void
 test_lock(void)
 {
@@ -171,14 +173,113 @@ test_lock(void)
   }
 }
 
+struct shm_comm {
+  int key;
+  char* msg;
+};
+
+void
+shmgetat_routine(void *arg)
+{
+  struct shm_comm* com = (struct shm_comm*)arg;
+  int key = com->key;
+  char* msg = com->msg;
+  char* shmem = shmgetat(key, 2);
+  strcpy(shmem, msg);
+  exit();
+}
+
+//      fork (1)
+//       |       \ #
+//              clone (2)
+//                |    \ #
+
+void
+test_shmgetat(void)
+{
+  int pid1, pid2;
+  int key = 0;
+  char* shmem = shmgetat(key, 1);
+  struct shm_comm com = {key, "hello grandpa"};
+  printf(1, "test_shmgetat\n");
+  pid1 = fork();
+  if (pid1 < 0) {
+    printf(2, "test_shmgetat: fork (1) failed\n");
+  } else if (pid1 == 0) {
+    printf(1, "test_shmgetat: fork (1) child\n");
+    pid2 = thread_create(shmgetat_routine, &com);
+    if (pid2 < 0) {
+      printf(2, "test_shmgetat: clone (2) failed\n");
+      exit();
+    } else if (pid2 > 0) {
+      if (thread_join() != pid2) {
+        printf(2, "test_shmgetat: pid=%d did not exit\n", pid2);
+      }
+      if (shm_refcount(key) != 2) {
+        printf(2, "test_shmgetat: clone (2) wrong ref count for key=%d: %d, expected: 2\n", key, shm_refcount(key)); 
+      }
+      exit();
+    }
+  } else {
+    if(wait() != pid1) {
+      printf(2, "test_shmgetat: pid=%d did not exit\n", pid1);
+    }
+    if (strcmp(com.msg, shmem) != 0) {
+      printf(2, "test_shmgetat: shm communication failed: com.msg=%s, shmem=%s\n", com.msg, shmem);
+    }
+
+    if (shm_refcount(key) != 1) {
+      printf(2, "test_shmgetat: fork (1) wrong ref count for key=%d: %d, expected: 1\n", key, shm_refcount(key)); 
+    }
+  }
+}
+
+void
+exec_func(void* arg)
+{
+  struct shm_comm* com = (struct shm_comm*)arg;
+  char* shm = shmgetat(com->key, 1);
+  char* argv[2] = {"echo", 0};
+  if (strcmp(shm, com->msg) != 0) {
+    printf(2, "test_mix_clone_exec: shm communication failed: com->msg=%s, shm=%s\n", com->msg, shm);
+  }
+  if (exec(argv[0], argv) < 0) {
+    printf(2, "test_mix_clone_exec: failed exec\n");
+  }
+  exit();
+}
+
+void
+test_mix_clone_exec(void)
+{
+  struct shm_comm com = {0, "hello text_mix_clone_exec"};
+  char* shm = shmgetat(com.key, 1);
+  int pid;
+  strcpy(shm, com.msg);
+  pid = thread_create(exec_func, &com);
+  if (pid < 0) {
+    printf(2, "test_mix_clone_exec: thread_create failed\n");
+  } else if (pid > 0) {
+    sleep(10);    // let exec really happen
+    if (wait() != pid) {
+      printf(2, "test_mix_clone_exec: pid=%d did not exit\n", pid);
+    }
+  }
+  // can still access shm
+  if (strcmp(shm, com.msg) != 0) {
+    printf(2, "test_mix_clone_exec: shm communication failed: com.msg=%s, shm=%s\n", com.msg, shm);
+  }
+}
 
 int
 main(int argc, char *argv[])
 {
   lock_init(&mutex);
-  test_single_thread();
-  test_n_thread(64);
-  test_mix_fork_clone();
-  test_lock();
+  // test_single_thread();
+  // test_n_thread(64);
+  // test_mix_fork_clone();
+  // test_lock();
+  //test_shmgetat();
+  test_mix_clone_exec();
   exit();
 }

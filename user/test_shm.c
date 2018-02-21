@@ -207,14 +207,15 @@ test_exec(void)
 {
   printf(1, "test_exec\n");
   char *a;
-  char *argv[1];
+  char *argv[2] = {"test_shm_exec", 0};
   a = shmgetat(0, 1);
   if ((uint)a != MAX_MEM - SHM_SIZE) {
     printf(2, "test fork: failed. address of a: %x, expected: %x\n",
         a, MAX_MEM - SHM_SIZE);
   }
-  argv[0] = "test_shm_exec";
-  exec(argv[0], argv);
+  if (exec(argv[0], argv) < 0) {
+    printf(2, "test_exec: exec failed\n");
+  }
 }
 
 

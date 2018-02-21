@@ -55,7 +55,7 @@ get_count(void* pgdir)
 {
   int i;
   for (i = 0; i < NPROC; i++) {
-    if (pgdir_table.refs[i].count > 0 ||
+    if (pgdir_table.refs[i].count > 0 &&
         pgdir_table.refs[i].addr == pgdir) {
       return pgdir_table.refs[i].count;
     }
@@ -68,7 +68,7 @@ get_index(void* pgdir)
 {
   int i;
   for (i = 0; i < NPROC; i++) {
-    if (pgdir_table.refs[i].count > 0 ||
+    if (pgdir_table.refs[i].count > 0 &&
         pgdir_table.refs[i].addr == pgdir) {
       return i;
     }
@@ -100,7 +100,7 @@ delete_ref(void* pgdir)
 {
   int i;
   for (i = 0; i < NPROC; i++) {
-    if (pgdir_table.refs[i].addr == pgdir ||
+    if (pgdir_table.refs[i].addr == pgdir &&
         pgdir_table.refs[i].count > 0) {
       pgdir_table.refs[i].count--;
       return pgdir_table.refs[i].count;
@@ -343,12 +343,13 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        // Release shared memory
         pt_count = delete_ref(p->pgdir);
+
         if (pt_count < 0) {
           cprintf("ref count of pgdir=%x is negative\n", p->pgdir);
           panic("pgdir ref");
         } else if (pt_count == 0) {  // last thread
+          // Release shared memory
           shm_release(p->pgdir, p->shm, p->shm_key_mask); 
           p->shm = USERTOP;
           p->shm_key_mask = 0;
@@ -647,7 +648,6 @@ getpinfo(struct pstat* ps) {
 int
 clone(thread_func fcn, void *arg, void *stack)
 {
-  cprintf("calling clone\n");
   int i, pid;
   uint sp, ustack[2];
   struct proc *np;

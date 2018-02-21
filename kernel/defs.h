@@ -114,6 +114,9 @@ void            yield(void);
 void            getpinfo(struct pstat*);
 int             clone(void(*fcn)(void*), void*, void*);
 int             join(void**);
+void            add_ref(void*); // threads
+int             delete_ref(void*);
+int             get_count(void*);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

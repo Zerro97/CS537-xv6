@@ -17,6 +17,8 @@ exec(char *path, char **argv)
   struct proghdr ph;
   pde_t *pgdir, *oldpgdir;
 
+  int pt_count;
+
   if((ip = namei(path)) == 0)
     return -1;
   ilock(ip);
@@ -82,10 +84,11 @@ exec(char *path, char **argv)
 
   
   oldpgdir = proc->pgdir;
-  // release the shared memory
-  shm_release(oldpgdir, proc->shm, proc->shm_key_mask); 
-  proc->shm = USERTOP;
-  proc->shm_key_mask = 0;
+
+  pt_count = delete_ref((void*)oldpgdir);
+  add_ref((void*)pgdir);
+  
+  // Release shared memory
 
   // Commit to the user image.
   proc->pgdir = pgdir;
@@ -94,7 +97,17 @@ exec(char *path, char **argv)
   proc->tf->esp = sp;
   proc->ustack = (char*)PGROUNDDOWN(sz);
   switchuvm(proc);
-  freevm(oldpgdir);
+
+  if (pt_count < 0) {
+    cprintf("ref count of pgdir=%x is negative\n", oldpgdir);
+    panic("pgdir ref");
+  } else if (pt_count == 0) {  // last thread 
+    shm_release(oldpgdir, proc->shm, proc->shm_key_mask); 
+    freevm(oldpgdir);
+  }
+  // should always reset the shm pointer and mask
+  proc->shm = USERTOP;
+  proc->shm_key_mask = 0;
 
   return 0;
 

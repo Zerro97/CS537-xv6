@@ -177,8 +177,6 @@ thread_create(thread_func start_routine, void *arg)
   }
   stack = (void*)(((uint)ptr_s + page_size) & ~0xFFF);
   ((uint*)stack)[-1] = (uint)ptr_s;    // trick, stack[-1] is allocated but unused. We can use it to store the pointer
-  printf(1, "thread_create stack loc: ptr=%x, stack %x, upper bound: %x, size: %d\n",
-      ptr_s, stack, (uint)ptr_s + 2 * page_size, (uint)ptr_s + 2 * page_size - (uint)stack);
   return clone(start_routine, arg, stack);
 }
 
