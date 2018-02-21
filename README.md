@@ -1,3 +1,17 @@
+## xv6 for UW-Madison CS537 (Introduction to Operating Systems)
+
+The repo consists of five projects for UW-Madison C537 Fall 2016. 
+
+1. [P1: add a system call](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P1/p1b.html) [Note](note/p1_syscall.md)
+1. [P2: multi-level feedback queue scheduler](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P2/p2b.html) [Note](note/p2_scheduler.md)
+1. [P3: shared memory](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P3/p3b.html) [Note](p3_shared_memory.md)
+1. [P4: threads](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P4/p4b.html) [Note](p4_thread.md)
+1. [P5] 
+
+
+
+## Original README
+
 xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
 Version 6 (v6).  xv6 loosely follows the structure and style of v6,
 but is implemented for a modern x86-based multiprocessor using ANSI C.
