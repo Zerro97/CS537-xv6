@@ -93,7 +93,7 @@ When create a thread, we need to allocate one page for the stack. The stack also
 
 1. malloc two pages. 
 1. set the stack pointer to the lowest page aligned address.
-1. set stack[-1] the address of the memory allocated (``ptr_s``), so that we can retrieve the pointer when free the stack.
+1. set stack[-1] the address of the memory allocated (``ptr_s``), so that we can retrieve the pointer when we free the stack.
 
 The code snippet is
 
