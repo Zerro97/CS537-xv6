@@ -2,12 +2,11 @@
 
 The repo consists of five projects for UW-Madison C537 Fall 2016. 
 
-1. [P1: add a system call](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P1/p1b.html) | [Note](note/p1_syscall.md) Files: [kernel/sysproc.c](kernel/sysproc.c), [kernel/syscall.c](kernel/syscall.c)
-1. [P2: multi-level feedback queue scheduler](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P2/p2b.html) | [Note](note/p2_scheduler.md) | Files: [kernel/proc.c](kernel/proc.c)
-1. [P3: shared memory](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P3/p3b.html) | [Note](note/p3_shared_memory.md) | Files: [kernel/vm.c](kernel/proc.c)
-1. [P4: threads](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P4/p4b.html) | [Note](note/p4_thread.md) | Files: [kernel/proc.c](kernel/proc.c), [user/ulib.c](user/ulib.c)
-1. [P5] 
-
+1. [P1: Add a system call](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P1/p1b.html) | [Note](note/p1_syscall.md) Files: [kernel/sysproc.c](kernel/sysproc.c), [kernel/syscall.c](kernel/syscall.c)
+1. [P2: Multi-level feedback queue scheduler](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P2/p2b.html) | [Note](note/p2_scheduler.md) | Files: [kernel/proc.c](kernel/proc.c)
+1. [P3: Shared memory](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P3/p3b.html) | [Note](note/p3_shared_memory.md) | Files: [kernel/vm.c](kernel/proc.c)
+1. [P4: Threads](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P4/p4b.html) | [Note](note/p4_thread.md) | Files: [kernel/proc.c](kernel/proc.c), [user/ulib.c](user/ulib.c)
+1. [P5: File system integrity](http://pages.cs.wisc.edu/~dusseau/Classes/CS537/Fall2016/Projects/P5/p5b.html) | [Note](note/p5_fs_integrity.md) | Files: [kernel/fs.c](kernel/fs.c)
 
 
 ## Original README

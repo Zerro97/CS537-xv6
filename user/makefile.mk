@@ -3,6 +3,7 @@
 USER_PROGS := \
 	cat\
 	echo\
+	filestat\
 	forktest\
 	getpinfo\
 	grep\
@@ -16,6 +17,7 @@ USER_PROGS := \
 	sh\
 	stressfs\
 	syscallptest\
+	test_fsi\
 	test_thread\
 	test_shm\
 	test_shm_exec\

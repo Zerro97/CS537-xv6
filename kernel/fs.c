@@ -22,6 +22,17 @@
 #include "file.h"
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
+
+// p5b
+#define real_addr(addr, type) ((type == T_CHECKED) ? (addr & 0x00FFFFFF) : addr)
+#define get_checksum(addr) ((uchar)(addr >> 24))
+#define synth_addr(addr, chksum) (((uint)chksum) << 24 | real_addr(addr, T_CHECKED))
+
+uchar gen_checksum(struct buf* bp);
+int vrfy_checksum(struct buf* bp, uchar chk_sum);
+static int set_checksum(struct inode *ip, uint bn, uchar chk_sum);
+static uchar aggregate_checksum(struct inode *ip);
+
 static void itrunc(struct inode*);
 
 // Read the super block.
@@ -322,14 +333,14 @@ bmap(struct inode *ip, uint bn)
   uint addr, *a;
   struct buf *bp;
 
-  if(bn < NDIRECT){
+  if(bn < NDIRECT) {
     if((addr = ip->addrs[bn]) == 0)
       ip->addrs[bn] = addr = balloc(ip->dev);
     return addr;
   }
   bn -= NDIRECT;
 
-  if(bn < NINDIRECT){
+  if(bn < NINDIRECT) {
     // Load indirect block, allocating if necessary.
     if((addr = ip->addrs[NDIRECT]) == 0)
       ip->addrs[NDIRECT] = addr = balloc(ip->dev);
@@ -388,6 +399,7 @@ stati(struct inode *ip, struct stat *st)
   st->type = ip->type;
   st->nlink = ip->nlink;
   st->size = ip->size;
+  st->checksum = aggregate_checksum(ip);  // checksum
 }
 
 // Read data from inode.
@@ -395,6 +407,8 @@ int
 readi(struct inode *ip, char *dst, uint off, uint n)
 {
   uint tot, m;
+  uint addr;
+  uchar checksum;
   struct buf *bp;
 
   if(ip->type == T_DEV){
@@ -409,7 +423,15 @@ readi(struct inode *ip, char *dst, uint off, uint n)
     n = ip->size - off;
 
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
-    bp = bread(ip->dev, bmap(ip, off/BSIZE));
+    addr = bmap(ip, off/BSIZE);
+    bp = bread(ip->dev, real_addr(addr, ip->type));
+    // verify checksum
+    if (ip->type == T_CHECKED) {
+      checksum = get_checksum(addr);
+      if (vrfy_checksum(bp, checksum) == 0) {
+        return -1;      // the block has been corrupted
+      }
+    }
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(dst, bp->data + off%BSIZE, m);
     brelse(bp);
@@ -440,6 +462,11 @@ writei(struct inode *ip, char *src, uint off, uint n)
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(bp->data + off%BSIZE, src, m);
     bwrite(bp);
+    if (ip->type == T_CHECKED) {
+      if (set_checksum(ip, off/BSIZE, gen_checksum(bp)) < 0) {
+        cprintf("writei: set checksum failed\n");
+      }
+    }
     brelse(bp);
   }
 
@@ -610,4 +637,83 @@ struct inode*
 nameiparent(char *path, char *name)
 {
   return namex(path, 1, name);
+}
+
+// p5b
+uchar
+gen_checksum(struct buf* bp)
+{
+  int i;
+  uchar chk_sum = 0;
+  for (i = 0; i < BSIZE; i++) {
+    chk_sum ^= bp->data[i];
+  }
+  return chk_sum;
+}
+
+int
+vrfy_checksum(struct buf* bp, uchar chk_sum)
+{
+  return bp && (gen_checksum(bp) == chk_sum);
+}
+
+// assume the bn is always valid
+static int
+set_checksum(struct inode *ip, uint bn, uchar chk_sum)
+{
+  uint addr, *a;
+  struct buf *bp;
+
+  if(bn < NDIRECT) {
+    if (ip->addrs[bn] == 0) return -1;
+    ip->addrs[bn] = synth_addr(ip->addrs[bn], chk_sum);
+    return 0;
+  }
+  bn -= NDIRECT;
+
+  if(bn < NINDIRECT) {
+    // Load indirect block, allocating if necessary.
+    
+    if((addr = ip->addrs[NDIRECT]) == 0) return -1;
+    bp = bread(ip->dev, real_addr(addr, ip->type));
+    a = (uint*)bp->data;
+    if(a[bn] == 0) return -1;
+    a[bn] = synth_addr(a[bn], chk_sum);
+    bwrite(bp);
+    brelse(bp);
+    return 0;
+  }
+
+  panic("set_checksum: out of range");
+}
+
+// aggerate all checksums in an inode
+static uchar
+aggregate_checksum(struct inode *ip)
+{
+  uchar chk_sum = 0;
+  uint addr, *a;
+  struct buf *bp;
+  int bn = 0;
+  while (bn < NDIRECT) {
+    if (ip->addrs[bn] == 0) {
+      return chk_sum;
+    }
+    chk_sum ^= get_checksum(ip->addrs[bn]);
+    bn++;
+  }
+  if((addr = ip->addrs[NDIRECT]) == 0) return chk_sum;
+  bp = bread(ip->dev, real_addr(addr, ip->type));
+  a = (uint*)bp->data;
+  bn -= NDIRECT;
+  while (bn < NINDIRECT) {
+    if (a[bn] == 0) {
+      brelse(bp);
+      return chk_sum;
+    }
+    chk_sum ^= get_checksum(a[bn]);
+    bn++;
+  }
+  brelse(bp);
+  panic("aggregate_checksum: out of range");
 }

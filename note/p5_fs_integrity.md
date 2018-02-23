@@ -149,6 +149,7 @@ The file descriptor is transferred to ``struct file *f`` [kernel/file.h](../kern
     };
 
 The file descriptor is, in fact, a index of an array in each process,
+
     struct proc {
       ...
       struct file *ofile[NOFILE];  // Open files
@@ -171,4 +172,6 @@ The ``argfd(0, 0, &f)`` set ``f = ofile[fd]``. There is one field ``*ip`` inside
       uint addrs[NDIRECT+1];
     };
 
+The ``type`` can be ``T_DIR,T_FILE,T_DEV``. In p5b we will add a new type ``T_CHECKED``.
+ 
 Thus we have can track information about the file on ``fs.img``. Then ``int fileread(struct file *f, char *addr, int n)`` ([kernel/file.c](../kernel/file.c)) is called, which calls ``int readi(struct inode *ip, char *dst, uint off, uint n)`` ([kernel/fs.c](../kernel/fs.c)) to get the desired content from the fs image.
